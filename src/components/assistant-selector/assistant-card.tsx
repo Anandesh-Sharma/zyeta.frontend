@@ -1,7 +1,7 @@
-import { Star, Bot, Zap, Crown, TrendingUp, Clock, Users, ChevronRight } from 'lucide-react';
+import { Star, Bot, Zap, Users, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Assistant } from '@/lib/store/assistants/types';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { AssistantDetailsModal } from './assistant-details-modal';
 import { Rating } from '@smastrom/react-rating';
 import { RatingModal } from './rating-modal';
@@ -26,31 +26,31 @@ export function AssistantCard({ assistant, isSelected, onSelect }: AssistantCard
   const hoverTimeoutRef = useRef<number>();
   const Icon = assistant.icon || Bot;
 
-  const handleReadMore = (e: React.MouseEvent) => {
+  const handleReadMore = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDetails(true);
-  };
+  }, []);
 
-  const handleRatingClick = (e: React.MouseEvent) => {
+  const handleRatingClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setShowRatingModal(true);
-  };
+  }, []);
 
-  const handleRatingMouseEnter = () => {
+  const handleRatingMouseEnter = useCallback(() => {
     clearTimeout(hoverTimeoutRef.current);
     setIsRatingHovered(true);
-  };
+  }, []);
 
-  const handleRatingMouseLeave = () => {
+  const handleRatingMouseLeave = useCallback(() => {
     hoverTimeoutRef.current = window.setTimeout(() => {
       setIsRatingHovered(false);
     }, 300);
-  };
+  }, []);
 
-  const handleHoverRatingChange = (value: number) => {
+  const handleHoverRatingChange = useCallback((value: number) => {
     setHoveredRating(value);
     setShowRatingModal(true);
-  };
+  }, []);
 
   return (
     <>

@@ -1,6 +1,5 @@
 import { Bot, User, Copy, Check, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Message } from '@/lib/types/message';
-import { getAssistant } from '@/lib/constants/chat';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,6 +9,8 @@ import { ImageBlock } from '@/components/chat/blocks/image-block';
 import { VideoBlock } from '@/components/chat/blocks/video-block';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
+import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
 
 interface MessageModalProps {
   message: Message;
@@ -32,8 +33,11 @@ export function MessageModal({
   liked,
   onLike
 }: MessageModalProps) {
-  const assistant = getAssistant(message.model);
-  const Icon = message.role === 'user' ? User : (assistant?.icon || Bot);
+  const { getSelectedAssistant } = useChatSessions();
+
+  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
+  
+  const Icon = message.role === 'user' ? User : Bot;
 
   const footer = (
     <>
@@ -79,7 +83,7 @@ export function MessageModal({
       isOpen={isOpen}
       onClose={onClose}
       size="2xl"
-      title={message.role === 'user' ? 'You' : assistant?.name || 'Assistant'}
+      title={message.role === 'user' ? 'You' : assistant?.name}
       description={new Date(message.timestamp).toLocaleString()}
       icon={<Icon className="h-5 w-5 text-primary-foreground" />}
       footer={footer}

@@ -1,13 +1,34 @@
 import { selector } from 'recoil';
-import { assistantFilterState, recentAssistantsState, llmModelsState } from './atoms';
-import { convertModelToAssistant } from '@/lib/constants/chat';
-import { Assistant } from '@/lib/types';
+import { assistantFilterState, llmModelsState } from './atoms';
+import { Assistant, LLMModel } from '@/lib/types';
+import { BotIcon } from 'lucide-react';
+
+// Convert LLM model to assistant format
+export function convertModelToAssistant(model: LLMModel) {
+  return {
+    id: model.id,
+    name: model.name,
+    description: `${model.provider} language model`,
+    type: 'core' as const,
+    icon: BotIcon,
+  };
+}
+
+export const assistantsState = selector<Assistant[]>({
+  key: 'assistants/allState',
+  get: ({ get }) => {
+    const llmModels = get(llmModelsState);
+    // Convert LLM models to assistants
+    const modelAssistants = llmModels.map(convertModelToAssistant);
+
+    return [...modelAssistants];;
+  },
+});
 
 export const filteredAssistantsState = selector<Assistant[]>({
   key: 'assistants/filteredState',
   get: ({ get }) => {
     const { searchQuery, category } = get(assistantFilterState);
-    const recentAssistants = get(recentAssistantsState);
     const llmModels = get(llmModelsState);
 
     // Convert LLM models to assistants
@@ -27,7 +48,7 @@ export const filteredAssistantsState = selector<Assistant[]>({
     // Apply category filter
     switch (category) {
       case 'agents':
-        filteredAssistants = filteredAssistants.filter(a => a.type === 'specialized');
+        filteredAssistants = filteredAssistants.filter(a => a.type as string === 'specialized');
         break;
       case 'models':
         filteredAssistants = filteredAssistants.filter(a => a.type === 'core');
@@ -46,3 +67,13 @@ export const filteredAssistantsState = selector<Assistant[]>({
     return filteredAssistants;
   },
 });
+
+// export const currentSelectedAssistantSelector = selector<Assistant>({
+//   key: 'assistants/currentSelectedAssistant',
+//   get: ({ get }) => {
+//     const models = get(llmModelsState);
+//     const currentSelectedAssistant = get(currentActiveAssistantState);
+//     const assistant = models.find(model => model.id === currentSelectedAssistant?.id);
+//     return assistant;
+//   },
+// });

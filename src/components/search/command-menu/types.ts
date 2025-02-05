@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import type { Chat } from '@/lib/types';
+import type { Conversation } from '@/lib/types';
 
 export type CommandItemType = 'model' | 'agent' | 'action' | 'chat';
 
@@ -10,7 +10,7 @@ export interface CommandItem {
   description: string;
   icon: LucideIcon;
   shortcut?: string;
-  chat?: Chat;
+  conversation?: Conversation;
 }
 
 export interface CommandGroup {

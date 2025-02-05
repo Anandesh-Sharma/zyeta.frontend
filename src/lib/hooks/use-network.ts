@@ -27,7 +27,7 @@ export function useNetwork() {
     });
   };
 
-  const makeRequest = async <T>(endpoint: string, options: RequestOptions = {}): Promise<T> => {
+  const makeRequest = async <T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> => {
     const { method = 'GET', body, headers = {}, cacheDuration, forceRefresh } = options;
 
     // Only cache GET requests
@@ -43,7 +43,7 @@ export function useNetwork() {
     try {
       const response = await axios({
         method,
-        url: `${API_HOST}${endpoint}`,
+        url: `${API_HOST}/api${endpoint}`,
         data: body,
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export function useNetwork() {
 
       return response.data;
     } catch (error) {
-      handleError(error);
+      return handleError(error);
     }
   };
 
@@ -73,7 +73,7 @@ export function useNetwork() {
     try {
       const response = await axios({
         method,
-        url: `${API_HOST}${endpoint}`,
+        url: `${API_HOST}/api${endpoint}`,
         data: body,
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ export function useNetwork() {
                   const parsed = JSON.parse(data);
                   if (parsed.message && typeof parsed.message === 'string') {
                     const cleanMessage = parsed.message
-                      .replace(/\\u[\dA-F]{4}/gi, match => 
+                      .replace(/\\u[\dA-F]{4}/gi, (match: string) => 
                         String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
                       )
                       .replace(/\\n/g, '\n');

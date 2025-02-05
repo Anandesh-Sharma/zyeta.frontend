@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MessageCircle, CreditCard, Inbox, BookOpen, BarChart2, MessageSquare, Users, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -7,14 +7,14 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { OrgSwitcher } from '@/components/organization/org-switcher';
 
 export const ICON_NAV = [
-  { icon: MessageCircle, href: '/chat', hideSidebar: true, name: 'Chat' },
+  { icon: MessageCircle, href: '/chat', showSidebar: false, name: 'Chat' },
   { icon: Store, href: '/agent-store', showSidebar: true, name: 'Agent Store' },
   { icon: CreditCard, href: '/billing', showSidebar: true, name: 'Billing' },
-  { icon: Inbox, href: '/inbox', name: 'Inbox' },
-  { icon: BookOpen, href: '/knowledge', name: 'Knowledge Base' },
-  { icon: BarChart2, href: '/reports', name: 'Reports' },
-  { icon: MessageSquare, href: '/outbound', name: 'Outbound' },
-  { icon: Users, href: '/contacts', name: 'Contacts' },
+  { icon: Inbox, href: '/inbox', showSidebar: true, name: 'Inbox' },
+  { icon: BookOpen, href: '/knowledge', showSidebar: true, name: 'Knowledge Base' },
+  { icon: BarChart2, href: '/reports', showSidebar: true, name: 'Reports' },
+  { icon: MessageSquare, href: '/outbound', showSidebar: true, name: 'Outbound' },
+  { icon: Users, href: '/contacts', showSidebar: true, name: 'Contacts' },
 ] as const;
 
 export function IconSidebar() {

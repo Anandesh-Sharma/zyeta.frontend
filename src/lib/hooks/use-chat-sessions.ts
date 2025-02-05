@@ -1,14 +1,14 @@
 import { useRecoilCallback } from 'recoil';
-import { chatSessionsByConversationFamily, activeSessionIdByConversationFamily } from '../store/chat-sessions/atoms';
+import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '../store/chat-sessions/atoms';
 import { ChatSession, CreateChatSessionRequest, ConversationWithSessions } from '../types/chat-session';
 import { useNetwork } from './use-network';
 import OrgState from '../store/organization/org-state';
-import { useRecoilValue } from 'recoil';
-import { llmModelsState } from '../store/assistants/atoms';
+import { currentConversationState } from '../store/conversations/selectors';
+import { selectedAssistanceBySessionState } from '../store/chat-sessions/selectors';
+import { assistantsState } from '../store/assistants/selectors';
 
 export function useChatSessions() {
   const { makeRequest } = useNetwork();
-  const models = useRecoilValue(llmModelsState);
 
   const fetchSessionsWithConversation = useRecoilCallback(({ set }) => async (conversationId: string) => {
     const orgId = OrgState.getCurrentOrg();
@@ -18,16 +18,16 @@ export function useChatSessions() {
 
     try {
       const response = await makeRequest<ConversationWithSessions>(
-        `/api/conversation/get_with_sessions?org_id=${orgId}&conversation_id=${conversationId}`
+        `/conversation/get_with_sessions?org_id=${orgId}&conversation_id=${conversationId}`
       );
       
       // Update sessions
-      set(chatSessionsByConversationFamily(conversationId), response.chat_sessions);
+      set(conversationSessionsByConversationFamily(conversationId), response.chat_sessions);
       
       // Set active session if there is one
       const activeSession = response.chat_sessions.find(session => session.status === 'active');
       if (activeSession) {
-        set(activeSessionIdByConversationFamily(conversationId), activeSession.id);
+        set(selectedSessionIdByConversationFamily(conversationId), activeSession.id);
       }
 
       return response;
@@ -37,46 +37,57 @@ export function useChatSessions() {
     }
   });
 
+  const getSelectedAssistant = useRecoilCallback(({ snapshot }) => () => {
+    const currentConversation = snapshot.getLoadable(currentConversationState).getValue();
+    if(!currentConversation?.id) {
+      return null;
+    }
+    const found = snapshot.getLoadable(selectedAssistanceBySessionState(currentConversation.id)).getValue();
+    if (!found) {
+      return snapshot.getLoadable(assistantsState).getValue()[0];
+    }
+    return found;
+  });
+
   const createChatSession = useRecoilCallback(({ set, snapshot }) => async (request: CreateChatSessionRequest) => {
     const orgId = OrgState.getCurrentOrg();
     if (!orgId) {
       throw new Error('No organization ID available');
     }
 
+    const selectedAssistant = getSelectedAssistant();
+    request.model_id = selectedAssistant?.id;
     try {
       // Get model name from models list
-      const model = models.find(m => m.id === request.model_id);
-      const modelName = model?.name || request.model_id;
-
       const response = await makeRequest<ChatSession>(
-        `/api/conversation/create_session?org_id=${orgId}`,
+        `/conversation/create_session?org_id=${orgId}`,
         {
           method: 'POST',
           body: {
             ...request,
-            model_name: modelName // Include model name in request
           }
         }
       );
 
       // Get current sessions and append new one
-      const currentSessions = await snapshot.getPromise(chatSessionsByConversationFamily(request.conversation_id));
+      const currentSessions = await snapshot.getPromise(conversationSessionsByConversationFamily(request.conversation_id));
 
       // End any other active sessions for this conversation
-      const updatedSessions = currentSessions.map(session => 
-        session.status === 'active' ? { ...session, status: 'ended' } : session
-      );
+      const updatedSessions = currentSessions.map(session => ({
+        ...session,
+        status: session.status === 'active' ? 'ended' : session.status
+      }));
 
       // Add new session with model name
       const sessionWithModelName = {
         ...response,
-        model_name: modelName
+        model_name: selectedAssistant?.name ?? 'Assistant'
       };
 
-      set(chatSessionsByConversationFamily(request.conversation_id), [...updatedSessions, sessionWithModelName]);
+      set(conversationSessionsByConversationFamily(request.conversation_id), [...updatedSessions, sessionWithModelName]);
       
       // Set as active session
-      set(activeSessionIdByConversationFamily(request.conversation_id), sessionWithModelName.id);
+      set(selectedSessionIdByConversationFamily(request.conversation_id), sessionWithModelName.id);
 
       return sessionWithModelName;
     } catch (err) {
@@ -85,67 +96,34 @@ export function useChatSessions() {
     }
   });
 
-  const updateChatSession = useRecoilCallback(({ set }) => async (
-    conversationId: string,
-    sessionId: string,
-    updates: Partial<ChatSession>
-  ) => {
-    set(chatSessionsByConversationFamily(conversationId), (prev) => 
-      prev.map(session => 
-        session.id === sessionId ? { ...session, ...updates } : session
-      )
-    );
+  const setSelectedSession = useRecoilCallback(({ set }) => (conversationId: string, sessionId: string) => {
+    set(selectedSessionIdByConversationFamily(conversationId), sessionId);
   });
 
-  const endChatSession = useRecoilCallback(({ set }) => async (conversationId: string, sessionId: string) => {
-    const orgId = OrgState.getCurrentOrg();
-    if (!orgId) {
-      throw new Error('No organization ID available');
+  const getSelectedSession = useRecoilCallback(({ snapshot }) => () => {
+    const currentConversation = snapshot.getLoadable(currentConversationState).getValue();
+    if(!currentConversation?.id) {
+      return null;
     }
-
-    try {
-      await makeRequest(
-        `/api/conversation/end_session/${sessionId}?org_id=${orgId}`,
-        { method: 'POST' }
-      );
-
-      // Update session status
-      set(chatSessionsByConversationFamily(conversationId), (prev) =>
-        prev.map(session =>
-          session.id === sessionId ? { ...session, status: 'ended' } : session
-        )
-      );
-
-      // Clear active session if it was the active one
-      set(activeSessionIdByConversationFamily(conversationId), (currentId) =>
-        currentId === sessionId ? null : currentId
-      );
-    } catch (err) {
-      console.error('Failed to end chat session:', err);
-      throw err;
-    }
+    return snapshot.getLoadable(selectedSessionIdByConversationFamily(currentConversation.id)).getValue();
   });
 
-  const setActiveSession = useRecoilCallback(({ set }) => (conversationId: string, sessionId: string) => {
-    set(activeSessionIdByConversationFamily(conversationId), sessionId);
-  });
-
-  const getActiveSessions = useRecoilCallback(({ snapshot }) => async (conversationId: string) => {
-    const sessions = await snapshot.getPromise(chatSessionsByConversationFamily(conversationId));
+  const getAllActiveSessions = useRecoilCallback(({ snapshot }) => async (conversationId: string) => {
+    const sessions = await snapshot.getPromise(conversationSessionsByConversationFamily(conversationId));
     return sessions.filter(session => session.status === 'active');
   });
 
-  const getAllSessions = useRecoilCallback(({ snapshot }) => async (conversationId: string) => {
-    return snapshot.getPromise(chatSessionsByConversationFamily(conversationId));
+  const getAllSessions = useRecoilCallback(({ snapshot }) => (conversationId: string) => {
+    return snapshot.getLoadable(conversationSessionsByConversationFamily(conversationId)).getValue();
   });
 
   return {
     createChatSession,
-    updateChatSession,
-    endChatSession,
-    setActiveSession,
-    getActiveSessions,
+    setSelectedSession,
+    getAllActiveSessions,
+    getSelectedSession,
     getAllSessions,
+    getSelectedAssistant,
     fetchSessionsWithConversation,
   };
 }

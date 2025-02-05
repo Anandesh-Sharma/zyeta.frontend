@@ -1,42 +1,24 @@
-import React from 'react';
-import { X, ChevronDown, Zap, Sparkles, Bot } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { X, ChevronDown, Zap, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Conversation } from '@/lib/types';
-import { getAssistant } from '@/lib/constants/chat';
 import { AssistantSelector } from '@/components/assistant-selector/assistant-selector';
 import { Button } from '@/components/ui/button';
-import { useRecoilValue } from 'recoil';
-import { chatSessionsByConversationFamily, activeSessionIdByConversationFamily } from '@/lib/store/chat-sessions/atoms';
+import { useUI } from '@/lib/hooks/use-ui';
+import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
 
-interface ConversationDetailsProps {
-  conversation: Conversation;
-  isOpen: boolean;
-  onClose: () => void;
-  onUpdateConversation: (updates: Partial<Conversation>) => void;
-}
+export function ConversationDetails() {
+  const { ui, toggleDetailsPanel: onClose } = useUI();
 
-export function ConversationDetails({
-  conversation,
-  isOpen,
-  onClose,
-  onUpdateConversation
-}: ConversationDetailsProps) {
+  const isOpen = ui.isDetailsPanelOpen;
+
   const [isAssistantSelectOpen, setIsAssistantSelectOpen] = React.useState(false);
-  const sessions = useRecoilValue(chatSessionsByConversationFamily(conversation.id));
-  const activeSessionId = useRecoilValue(activeSessionIdByConversationFamily(conversation.id));
-  const assistant = getAssistant(conversation.model);
-  const Icon = assistant.icon || Bot;
+  
+  const { getSelectedAssistant } = useChatSessions();
+  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
 
-  // Get active session's model name or fallback to assistant name
-  const activeSession = React.useMemo(() => 
-    sessions.find(s => s.id === activeSessionId),
-    [sessions, activeSessionId]
-  );
+  // const Icon = assistant?.icon;
 
-  const modelName = React.useMemo(() => 
-    activeSession?.model_name || assistant?.name || 'Assistant',
-    [activeSession, assistant]
-  );
+  const modelName = assistant?.name ?? '';
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -77,7 +59,7 @@ export function ConversationDetails({
                 className="w-full justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Icon className="h-4 w-4" />
+                  {/* <Icon className="h-4 w-4" /> */}
                   <span>{modelName}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -147,7 +129,7 @@ export function ConversationDetails({
                 </div>
                 <div>
                   <div className="text-xs font-medium text-muted-foreground mb-1">Description</div>
-                  <div className="text-sm">{assistant.description}</div>
+                  <div className="text-sm">{assistant?.description}</div>
                 </div>
                 <div>
                   <div className="text-xs font-medium text-muted-foreground mb-1">Context Length</div>
@@ -162,7 +144,6 @@ export function ConversationDetails({
       <AssistantSelector
         isOpen={isAssistantSelectOpen}
         onClose={() => setIsAssistantSelectOpen(false)}
-        currentAssistantId={conversation.model}
       />
     </>
   );

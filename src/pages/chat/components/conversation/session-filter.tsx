@@ -1,25 +1,30 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { ChevronDown, Layers } from 'lucide-react';
-import { ChatSession } from '@/lib/types/chat-session';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRecoilState } from 'recoil';
 import { selectedSessionIdByConversationFamily } from '@/lib/store/chat-sessions/atoms';
+import { useConversations } from '@/lib/hooks/use-conversations';
+import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
 
-interface SessionFilterProps {
-  conversationId: string;
-  sessions: ChatSession[];
-  activeSessionId: string | null;
-  onSelectSession: (sessionId: string) => void;
-}
+export function SessionFilter() {
+  const {currentConversation} = useConversations();
+  const {setSelectedSession, getAllSessions} = useChatSessions();
 
-export function SessionFilter({ conversationId, sessions, activeSessionId, onSelectSession }: SessionFilterProps) {
+  const onSelectSession = useCallback((sessionId: string) => {
+    if (currentConversation?.id) {
+      // setActiveSession(currentConversation.id, sessionId);
+    }
+  }, [currentConversation]);
+
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedSessionId, setSelectedSessionId] = useRecoilState(
-    selectedSessionIdByConversationFamily(conversationId)
+    selectedSessionIdByConversationFamily(currentConversation?.id ?? '')
   );
+
+  const sessions = useMemo(() => getAllSessions(currentConversation?.id ?? ''), [currentConversation]);
 
   // Sort sessions by creation date, newest first
   const sortedSessions = useMemo(() => 

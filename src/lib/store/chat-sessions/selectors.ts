@@ -1,22 +1,34 @@
 import { selectorFamily } from 'recoil';
-import { chatSessionsByConversationFamily, activeSessionIdByConversationFamily } from './atoms';
+import {  conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from './atoms';
 import { ChatSession } from '@/lib/types/chat-session';
+import { Assistant } from '@/lib/types';
+import { assistantsState } from '../assistants/selectors';
 
 // Get all sessions for a conversation
 export const allSessionsByConversationState = selectorFamily<ChatSession[], string>({
   key: 'chatSessions/allSessionsByConversation',
   get: (conversationId: string) => ({ get }) => {
-    return get(chatSessionsByConversationFamily(conversationId));
+    return get(conversationSessionsByConversationFamily(conversationId));
   },
 });
 
-// Get active session for a conversation
-export const activeSessionByConversationState = selectorFamily<ChatSession | null, string>({
-  key: 'chatSessions/activeSessionByConversation',
+// // Get active session for a conversation
+export const selectedSessionByConversationState = selectorFamily<ChatSession | null, string>({
+  key: 'chatSessions/selectedSessionByConversation',
   get: (conversationId: string) => ({ get }) => {
-    const sessions = get(chatSessionsByConversationFamily(conversationId));
-    const activeId = get(activeSessionIdByConversationFamily(conversationId));
-    return sessions.find(session => session.id === activeId) || null;
+    const sessions = get(conversationSessionsByConversationFamily(conversationId));
+    const selectedSessionId = get(selectedSessionIdByConversationFamily(conversationId));
+    return sessions.find(session => session.id === selectedSessionId) || null;
+  },
+});
+
+export const selectedAssistanceBySessionState = selectorFamily<Assistant | null, string>({
+  key: 'chatSessions/selectedAssistanceBySession',
+  get: (conversationId: string) => ({ get }) => {
+    const selectedSessionId = get(selectedSessionIdByConversationFamily(conversationId));
+    const assistants = get(assistantsState);
+    const selectedAssistant = assistants.find(assistant => assistant.id === selectedSessionId);
+    return selectedAssistant || null;
   },
 });
 
@@ -24,7 +36,7 @@ export const activeSessionByConversationState = selectorFamily<ChatSession | nul
 export const sortedSessionsByConversationState = selectorFamily<ChatSession[], string>({
   key: 'chatSessions/sortedSessionsByConversation',
   get: (conversationId: string) => ({ get }) => {
-    const sessions = get(chatSessionsByConversationFamily(conversationId));
+    const sessions = get(conversationSessionsByConversationFamily(conversationId));
     return [...sessions].sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );

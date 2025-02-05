@@ -1,6 +1,5 @@
 import { Message } from '@/lib/types/message';
 import { Bot, User } from 'lucide-react';
-import { getAssistant } from '@/lib/constants/chat';
 import { cn } from '@/lib/utils';
 import { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -10,6 +9,7 @@ import { CodeBlock } from '@/components/chat/blocks/code-block';
 import { ImageBlock } from '@/components/chat/blocks/image-block';
 import { VideoBlock } from '@/components/chat/blocks/video-block';
 import { MessageActions } from './actions';
+import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
 
 interface ChatMessageProps {
   message: Message;
@@ -17,16 +17,16 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage = memo(({ message, onRegenerate }: ChatMessageProps) => {
-  const assistant = getAssistant(message.model);
-  const Icon = message.role === 'user' ? User : (assistant?.icon || Bot);
+  const { getSelectedAssistant } = useChatSessions();
+
+  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
+
+  const Icon = message.role === 'user' ? User : Bot;
   const isLoading = message.status === 'loading' && !message.streaming;
   const isUser = message.role === 'user';
 
   // Use model name from message if available, otherwise fallback to assistant name
-  const modelName = useMemo(() => {
-    if (isUser) return 'You';
-    return message.modelName || assistant?.name || 'Assistant';
-  }, [isUser, message.modelName, assistant]);
+  const modelName = assistant?.name;
 
   // Pre-process the message content to extract media URLs and cache them
   const { content, mediaBlocks } = useMemo(() => {

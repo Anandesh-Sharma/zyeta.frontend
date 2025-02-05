@@ -1,4 +1,4 @@
-import { CreditCard, Receipt, Wallet, Clock, ArrowUpDown, CreditCardIcon, Settings, Grid, Package, Store } from 'lucide-react';
+import { CreditCard, Receipt, Clock, ArrowUpDown, CreditCardIcon, Settings, Grid, Package, Store } from 'lucide-react';
 
 export const BILLING_NAV = [
   { name: 'Overview', href: '/billing', icon: CreditCard },

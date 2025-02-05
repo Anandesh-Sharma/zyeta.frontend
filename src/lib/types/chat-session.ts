@@ -24,7 +24,8 @@ export interface ChatSession {
 
 export interface CreateChatSessionRequest {
   conversation_id: string;
-  model_id: string;
+  model_id?: string;
+  agent_id?: string;
 }
 
 export interface ChatSessionStore {

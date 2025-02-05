@@ -1,5 +1,3 @@
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Rating } from '@smastrom/react-rating';
@@ -12,7 +10,7 @@ interface RatingModalProps {
     rating?: number;
     usageCount?: string;
     tags?: string[];
-    credits?: number;
+    credits?: string;
   };
   isOpen: boolean;
   onClose: () => void;

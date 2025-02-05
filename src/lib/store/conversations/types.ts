@@ -1,7 +1,6 @@
 export interface ConversationState {
   id: string;
   title: string;
-  model: string;
   timestamp: number;
 }
 

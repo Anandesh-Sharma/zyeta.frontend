@@ -1,6 +1,5 @@
-import { Bot, Star, Users, Zap, Copy, Check, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Bot, Star, Users, Zap } from 'lucide-react';
 import { Assistant } from '@/lib/types';
-import { getAssistant } from '@/lib/constants/chat';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { useCallback } from 'react';
@@ -10,7 +9,7 @@ interface AssistantDetailsModalProps {
     rating?: number;
     usageCount?: string;
     tags?: string[];
-    credits?: number;
+    credits?: string;
   };
   isOpen: boolean;
   onClose: () => void;

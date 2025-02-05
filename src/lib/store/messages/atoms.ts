@@ -1,7 +1,7 @@
 import { atomFamily } from 'recoil';
 import { Message } from '@/lib/types/message';
 
-export const messagesByChatAtom = atomFamily<Message[] | undefined, string>({
+export const messagesByConversationAtom = atomFamily<Message[] | undefined, string>({
   key: 'messages/messagesByChatAtom',
   default: undefined,
 });

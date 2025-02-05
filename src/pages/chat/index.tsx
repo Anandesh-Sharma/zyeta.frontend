@@ -1,81 +1,29 @@
-import { useUI } from '@/lib/hooks/use-ui';
 // import { CommandMenu } from '@/components/search/command-menu';
-import { memo, useCallback } from 'react';
-import { useRecoilValue, useRecoilState } from 'recoil';
-import { currentConversationState } from '@/lib/store/conversations/selectors';
-import { useConversations } from '@/lib/hooks/use-conversations';
-import { activeSessionIdByConversationFamily } from '@/lib/store/chat-sessions/atoms';
+import { memo } from 'react';
 import {
   ConversationList,
   ConversationHeader,
-  ConversationMessages,
   ConversationDetails,
-  ConversationInput
+  ConversationInput,
+  ConversationMessages
 } from './components/conversation';
 
-interface ChatPageProps {
-  onOpenSearch: () => void;
-}
-
-export const ChatPage = memo(({ onOpenSearch }: ChatPageProps) => {
-  const { ui, toggleSidebar, toggleDetailsPanel, toggleSearch } = useUI();
-  const currentConversation = useRecoilValue(currentConversationState);
-  const { updateConversation } = useConversations();
-  const [activeSessionId, setActiveSessionId] = useRecoilState(
-    currentConversation 
-      ? activeSessionIdByConversationFamily(currentConversation.id)
-      : activeSessionIdByConversationFamily('')
-  );
-
-  const handleUpdateConversation = useCallback((updates: Partial<typeof currentConversation>) => {
-    if (currentConversation) {
-      updateConversation(currentConversation.id, updates);
-    }
-  }, [currentConversation, updateConversation]);
-
-  const handleSelectSession = useCallback((sessionId: string) => {
-    setActiveSessionId(sessionId);
-  }, [setActiveSessionId]);
-
-  if (!currentConversation) return null;
-
+export const ChatPage = memo(() => {
   return (
     <div className="fixed inset-0 bg-background pl-[56px] flex">
-      <ConversationList
-        onOpenSearch={onOpenSearch}
-        isSidebarOpen={ui.isSidebarOpen}
-      />
+      <ConversationList />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <ConversationHeader
-          modelId={currentConversation.model}
-          conversationId={currentConversation.id}
-          isSidebarOpen={ui.isSidebarOpen}
-          onToggleSidebar={toggleSidebar}
-          onOpenSearch={onOpenSearch}
-          onToggleDetails={toggleDetailsPanel}
-          onSelectSession={handleSelectSession}
-        />
+        <ConversationHeader />
 
         <div className="flex-1 overflow-y-auto min-h-0">
-          <ConversationMessages
-            conversationId={currentConversation.id}
-            modelId={currentConversation.model}
-          />
+          <ConversationMessages />
         </div>
 
-        <ConversationInput
-          conversationId={currentConversation.id}
-          modelId={currentConversation.model}
-        />
+        <ConversationInput />
       </div>
 
-      <ConversationDetails
-        conversation={currentConversation}
-        isOpen={ui.isDetailsPanelOpen}
-        onClose={toggleDetailsPanel}
-        onUpdateConversation={handleUpdateConversation}
-      />
+      <ConversationDetails />
 
       {/* <CommandMenu
         isOpen={ui.isSearchOpen}

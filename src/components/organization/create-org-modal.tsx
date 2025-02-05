@@ -4,6 +4,7 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { useNetwork } from '@/lib/hooks/use-network';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
+import { Organization } from '@/lib/types';
 
 interface CreateOrgModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export function CreateOrgModal({ isOpen, onClose }: CreateOrgModalProps) {
     setError(null);
 
     try {
-      const newOrg = await makeRequest(`/api/org/create_org?name=${encodeURIComponent(name.trim())}`, {
+      const newOrg = await makeRequest<Organization>(`/org/create_org?name=${encodeURIComponent(name.trim())}`, {
         method: 'POST'
       });
 

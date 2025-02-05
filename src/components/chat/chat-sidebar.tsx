@@ -1,11 +1,11 @@
-import { Chat } from '@/lib/types';
 import { MessageSquare, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Conversation } from '@/lib/types';
 
 interface ChatSidebarProps {
-  chats: Chat[];
-  currentChat: Chat | null;
-  onSelectChat: (chat: Chat) => void;
+  chats: Conversation[];
+  currentChat: Conversation | null;
+  onSelectChat: (chat: Conversation) => void;
   onNewChat: () => void;
   onDeleteChat: (chatId: string) => void;
 }

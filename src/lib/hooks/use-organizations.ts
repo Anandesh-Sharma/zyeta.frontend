@@ -1,4 +1,4 @@
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { organizationsState, currentOrgIdState } from '../store/organization/atoms';
 import { currentOrganizationState } from '../store/organization/selectors';
 import { useNetwork } from './use-network';
@@ -10,7 +10,7 @@ import OrgState from '../store/organization/org-state';
 
 export function useOrganizations() {
   const [organizations, setOrganizations] = useRecoilState(organizationsState);
-  const [currentOrgId, setCurrentOrgId] = useRecoilState(currentOrgIdState);
+  const setCurrentOrgId = useSetRecoilState(currentOrgIdState);
   const currentOrganization = useRecoilValue(currentOrganizationState);
   const { makeRequest } = useNetwork();
   const { fetchModels } = useLLM();
@@ -18,7 +18,7 @@ export function useOrganizations() {
 
   const fetchOrganizations = useCallback(async () => {
     try {
-      const response = await makeRequest<Organization[]>('/api/org/list');
+      const response = await makeRequest<Organization[]>('/org/list');
       
       if (!Array.isArray(response)) {
         throw new Error('Invalid response format');

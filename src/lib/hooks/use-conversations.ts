@@ -1,14 +1,14 @@
-import { useRecoilCallback, useRecoilValue, useRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilValue } from 'recoil';
 import { conversationAtomFamily, conversationIdsState, currentConversationIdState } from '../store/conversations/atoms';
-import { currentConversationState } from '../store/conversations/selectors';
+import { allConversationsState, currentConversationState } from '../store/conversations/selectors';
 import { Conversation, APIConversation } from '@/lib/types';
-import { DEFAULT_ASSISTANT } from '../constants/chat';
 import { useNetwork } from './use-network';
 import { useChatSessions } from './use-chat-sessions';
 import { useMessages } from './use-messages';
 import OrgState from '../store/organization/org-state';
-import { chatSessionsByConversationFamily } from '../store/chat-sessions/atoms';
-import { llmModelsState } from '../store/assistants/atoms';
+import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '../store/chat-sessions/atoms';
+import { getTimestamp } from '@/lib/utils';
+import { v4 } from 'uuid';
 
 // Cache duration for conversations (5 minutes)
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -16,12 +16,11 @@ const CACHE_DURATION = 5 * 60 * 1000;
 export function useConversations() {
   const conversationIds = useRecoilValue(conversationIdsState);
   const currentConversation = useRecoilValue(currentConversationState);
-  const models = useRecoilValue(llmModelsState);
   const { makeRequest } = useNetwork();
   const { createChatSession, fetchSessionsWithConversation } = useChatSessions();
   const { fetchMessages } = useMessages();
 
-  const fetchConversations = useRecoilCallback(({ set }) => async (forceRefresh = false) => {
+  const fetchConversations = useRecoilCallback(({ set }) => async (forceRefresh: boolean = false) => {
     const orgId = OrgState.getCurrentOrg();
     if (!orgId) {
       console.warn('No organization ID available');
@@ -30,21 +29,22 @@ export function useConversations() {
 
     try {
       const response = await makeRequest<APIConversation[]>(
-        `/api/conversation/list?org_id=${orgId}`,
+        `/conversation/list?org_id=${orgId}`,
         { 
           cacheDuration: CACHE_DURATION,
           forceRefresh
         }
       );
 
-      const conversations = response.map<Conversation>(apiConv => ({
-        id: apiConv.id,
-        title: apiConv.title || 'New Chat',
-        model: DEFAULT_ASSISTANT.id,
-        timestamp: new Date(apiConv.created_at).getTime(),
-      }));
+      const conversations = response.map(conv => {
+        return {
+          ...conv,
+          timestamp: getTimestamp(conv.created_at),
+        };
+      });
 
       set(conversationIdsState, conversations.map(conv => conv.id));
+
       conversations.forEach(conv => {
         set(conversationAtomFamily(conv.id), conv);
       });
@@ -56,10 +56,7 @@ export function useConversations() {
     }
   });
 
-  const createNewConversation = useRecoilCallback(({ set }) => async (modelId?: string) => {
-    // Use first available model or default
-    const defaultModel = modelId || models[0]?.id || DEFAULT_ASSISTANT.id;
-
+  const createNewConversation = useRecoilCallback(({ set }) => async () => {
     const orgId = OrgState.getCurrentOrg();
     if (!orgId) {
       throw new Error('No organization ID available');
@@ -67,11 +64,11 @@ export function useConversations() {
 
     try {
       const response = await makeRequest<APIConversation>(
-        `/api/conversation/create?org_id=${orgId}`,
+        `/conversation/create?org_id=${orgId}`,
         {
           method: 'POST',
           body: {
-            title: 'New Chat'
+            title: v4()
           }
         }
       );
@@ -79,24 +76,24 @@ export function useConversations() {
       const newConversation: Conversation = {
         id: response.id,
         title: response.title || 'New Chat',
-        model: defaultModel,
         timestamp: new Date(response.created_at).getTime(),
       };
 
       // Create chat session first
-      const chatSession = await createChatSession({
+      const chatSession = JSON.parse(JSON.stringify(await createChatSession({
         conversation_id: newConversation.id,
-        model_id: defaultModel
-      });
+      })));
+
+      chatSession.status = 'active';
 
       // Initialize chat sessions with the new session
-      set(chatSessionsByConversationFamily(newConversation.id), [chatSession]);
+      set(conversationSessionsByConversationFamily(newConversation.id), [chatSession]);
 
       // Update local state
       set(conversationAtomFamily(newConversation.id), newConversation);
       set(conversationIdsState, (prev) => [newConversation.id, ...prev]);
       set(currentConversationIdState, newConversation.id);
-
+      set(selectedSessionIdByConversationFamily(newConversation.id), chatSession.id);
       return newConversation;
     } catch (err) {
       console.error('Failed to create conversation:', err);
@@ -134,6 +131,11 @@ export function useConversations() {
     ]);
   });
 
+  const getConversations = useRecoilCallback(({ snapshot }) => () => {
+    const conversations = snapshot.getLoadable(allConversationsState).getValue();
+    return conversations;
+  });
+
   return {
     conversationIds,
     currentConversation,
@@ -142,5 +144,6 @@ export function useConversations() {
     deleteConversation,
     setCurrentConversationId,
     fetchConversations,
+    getConversations
   };
 }

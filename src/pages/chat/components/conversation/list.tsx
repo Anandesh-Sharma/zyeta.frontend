@@ -1,26 +1,26 @@
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { MessageCircleCode, Plus, Search, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useRecoilValue } from 'recoil';
-import { sortedConversationsState, currentConversationState } from '@/lib/store/conversations/selectors';
-import { getAssistant } from '@/lib/constants/chat';
-import { Conversation } from '@/lib/types';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Button } from '@/components/ui/button';
 import { useConversations } from '@/lib/hooks/use-conversations';
+import { useUI } from '@/lib/hooks/use-ui';
 
-interface ConversationListProps {
-  onOpenSearch: () => void;
-  isSidebarOpen: boolean;
-}
-
-export function ConversationList({ onOpenSearch, isSidebarOpen }: ConversationListProps) {
-  const conversations = useRecoilValue(sortedConversationsState);
-  const currentConversation = useRecoilValue(currentConversationState);
-  const { createNewConversation, deleteConversation, setCurrentConversationId } = useConversations();
+export function ConversationList() {
+  const { ui, toggleSearch: onOpenSearch } = useUI();
+  const isSidebarOpen = ui.isSidebarOpen;
+  const {getConversations} = useConversations();
+  const { 
+    createNewConversation,
+    deleteConversation,
+    setCurrentConversationId,
+    currentConversation,
+  } = useConversations();
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   
+  const conversations = useMemo(() => getConversations(), [getConversations]);
+
   const handleDeleteConversation = useCallback((e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
     if (conversations.length > 1) {
@@ -28,7 +28,7 @@ export function ConversationList({ onOpenSearch, isSidebarOpen }: ConversationLi
     }
   }, [conversations.length]);
 
-  const handleNewChat = async () => {
+  const handleNewChat = useCallback(  async () => {
     if (isCreatingChat) return;
     setIsCreatingChat(true);
     try {
@@ -36,9 +36,54 @@ export function ConversationList({ onOpenSearch, isSidebarOpen }: ConversationLi
     } finally {
       setIsCreatingChat(false);
     }
-  };
+  }, [createNewConversation, isCreatingChat]);
 
   if (!currentConversation) return null;
+
+  const renderConversations = useMemo(() => {
+    return conversations.map((conversation) => {
+      const isActive = currentConversation.id === conversation.id;
+      
+      return (
+        <div
+          key={conversation.id}
+          onClick={() => setCurrentConversationId(conversation.id)}
+          className={cn(
+            'group relative w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm cursor-pointer transition-all duration-200',
+            isActive 
+              ? 'bg-accent text-accent-foreground shadow-sm' 
+              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm'
+          )}
+        >
+          <div className={cn(
+            "h-5 w-5 rounded-md flex items-center justify-center transition-colors flex-shrink-0",
+            isActive 
+              ? 'text-accent-foreground' 
+              : 'text-muted-foreground group-hover:text-foreground'
+          )}>
+            <MessageCircleCode className="h-4 w-4" />
+          </div>
+          <span className="truncate flex-1 text-left">{conversation.title || 'New Chat'}</span>
+
+          {conversations.length > 1 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => handleDeleteConversation(e, conversation.id)}
+              className={cn(
+                "h-6 w-6 p-0 opacity-0 transition-opacity flex-shrink-0",
+                "group-hover:opacity-100",
+                "hover:bg-background/50 hover:text-foreground",
+                isActive && "hover:bg-accent-foreground/10"
+              )}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      );
+    })
+  }, [conversations, currentConversation]);
 
   return (
     <>
@@ -80,50 +125,7 @@ export function ConversationList({ onOpenSearch, isSidebarOpen }: ConversationLi
 
           {/* Conversations */}
           <div className="px-2 space-y-0.5">
-            {conversations.map((conversation) => {
-              const assistant = getAssistant(conversation.model);
-              const Icon = assistant.icon;
-              const isActive = currentConversation.id === conversation.id;
-              
-              return (
-                <div
-                  key={conversation.id}
-                  onClick={() => setCurrentConversationId(conversation.id)}
-                  className={cn(
-                    'group relative w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm cursor-pointer transition-all duration-200',
-                    isActive 
-                      ? 'bg-accent text-accent-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm'
-                  )}
-                >
-                  <div className={cn(
-                    "h-5 w-5 rounded-md flex items-center justify-center transition-colors flex-shrink-0",
-                    isActive 
-                      ? 'text-accent-foreground' 
-                      : 'text-muted-foreground group-hover:text-foreground'
-                  )}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <span className="truncate flex-1 text-left">{conversation.title || 'New Chat'}</span>
-
-                  {conversations.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => handleDeleteConversation(e, conversation.id)}
-                      className={cn(
-                        "h-6 w-6 p-0 opacity-0 transition-opacity flex-shrink-0",
-                        "group-hover:opacity-100",
-                        "hover:bg-background/50 hover:text-foreground",
-                        isActive && "hover:bg-accent-foreground/10"
-                      )}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
+            {renderConversations}
           </div>
         </div>
       </div>

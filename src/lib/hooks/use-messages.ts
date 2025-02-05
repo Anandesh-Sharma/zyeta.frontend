@@ -1,17 +1,18 @@
 import { useRecoilCallback, useRecoilValue } from 'recoil';
-import { messagesByChatAtom, isRespondingState, isLoadingMessagesState } from '../store/messages/atoms';
+import { messagesByConversationAtom, isRespondingState, isLoadingMessagesState } from '../store/messages/atoms';
 import { Message, APIMessage, APIMessageResponse } from '@/lib/types/message';
 import { v4 as uuidv4 } from 'uuid';
 import { useMemo } from 'react';
 import { useNetwork } from './use-network';
-import { activeSessionByConversationState } from '../store/chat-sessions/selectors';
 import OrgState from '../store/organization/org-state';
+import { selectedSessionByConversationState } from '../store/chat-sessions/selectors';
 
 const MESSAGES_LIMIT = 20;
 
 export function useMessages(conversationId?: string) {
   const isResponding = conversationId ? useRecoilValue(isRespondingState(conversationId)) : false;
   const isLoading = conversationId ? useRecoilValue(isLoadingMessagesState(conversationId)) : false;
+  
   const { makeStreamRequest, makeRequest } = useNetwork();
 
   const fetchMessages = useRecoilCallback(({ set }) => async (conversationId: string, offset = 0) => {
@@ -25,17 +26,17 @@ export function useMessages(conversationId?: string) {
       set(isLoadingMessagesState(conversationId), true);
       
       // Clear existing messages while loading
-      set(messagesByChatAtom(conversationId), undefined);
+      set(messagesByConversationAtom(conversationId), undefined);
 
       const response = await makeRequest<APIMessageResponse>(
-        `/api/conversation/messages?org_id=${orgId}&conversation_id=${conversationId}&limit=${MESSAGES_LIMIT}&offset=${offset}`
+        `/conversation/messages?org_id=${orgId}&conversation_id=${conversationId}&limit=${MESSAGES_LIMIT}&offset=${offset}`
       );
 
       // Convert API messages to our Message format
       const messages = response.messages.map(convertAPIMessage);
 
       // Set messages in state
-      set(messagesByChatAtom(conversationId), messages);
+      set(messagesByConversationAtom(conversationId), messages);
 
       return {
         messages,
@@ -45,7 +46,7 @@ export function useMessages(conversationId?: string) {
     } catch (error) {
       console.error('Failed to fetch messages:', error);
       // Set empty array to indicate error state
-      set(messagesByChatAtom(conversationId), []);
+      set(messagesByConversationAtom(conversationId), []);
       throw error;
     } finally {
       // Clear loading state
@@ -53,46 +54,45 @@ export function useMessages(conversationId?: string) {
     }
   });
 
-  const sendMessage = useRecoilCallback(({ set, snapshot }) => async (chatId: string, model: string, content: string) => {
-    const activeSession = await snapshot.getPromise(activeSessionByConversationState(chatId));
-    if (!activeSession) {
+  const sendMessage = useRecoilCallback(({ set, snapshot }) => async (conversationId: string, model: string, content: string) => {
+    const selectedSession = await snapshot.getPromise(selectedSessionByConversationState(conversationId));
+    if (!selectedSession) {
       throw new Error('No active chat session found');
     }
 
-    const currentIsResponding = await set(isRespondingState(chatId), prev => {
-      if (prev) return prev;
-      return true;
-    });
+    const {id, model_name} = selectedSession;
+
+    const currentIsResponding = await snapshot.getPromise(isRespondingState(conversationId));
 
     if (currentIsResponding) return;
 
-    const userMessage = createMessage(chatId, content, 'user', model, activeSession.id, activeSession.model_name);
-    set(messagesByChatAtom(chatId), (prev) => [...(prev || []), userMessage]);
+    const userMessage = createMessage(conversationId, content, 'user', model, id, model_name);
+    set(messagesByConversationAtom(conversationId), (prev) => [...(prev || []), userMessage]);
 
-    const aiMessage = createMessage(chatId, '', 'assistant', model, activeSession.id, activeSession.model_name);
-    set(messagesByChatAtom(chatId), (prev) => [...(prev || []), aiMessage]);
+    const aiMessage = createMessage(conversationId, '', 'assistant', model, id, model_name);
+    set(messagesByConversationAtom(conversationId), (prev) => [...(prev || []), aiMessage]);
     
     try {
-      await streamResponse(chatId, aiMessage.id, content, activeSession.id);
+      set(isRespondingState(conversationId), true);
+      await streamResponse(conversationId, aiMessage.id, content, id);
     } finally {
-      set(isRespondingState(chatId), false);
+      set(isRespondingState(conversationId), false);
     }
   });
 
-  const regenerateResponse = useRecoilCallback(({ set, snapshot }) => async (chatId: string, messageId: string, model: string) => {
-    const activeSession = await snapshot.getPromise(activeSessionByConversationState(chatId));
-    if (!activeSession) {
+  const regenerateResponse = useRecoilCallback(({ set, snapshot }) => async (conversationId: string, messageId: string, model: string) => {
+    const selectedSession = await snapshot.getPromise(selectedSessionByConversationState(conversationId));
+    if (!selectedSession) {
       throw new Error('No active chat session found');
     }
 
-    const currentIsResponding = await set(isRespondingState(chatId), prev => {
-      if (prev) return prev;
-      return true;
-    });
+    const {id, model_name} = selectedSession;
+
+    const currentIsResponding = snapshot.getLoadable(isRespondingState(conversationId)).getValue();
 
     if (currentIsResponding) return;
 
-    const messages = await snapshot.getPromise(messagesByChatAtom(chatId));
+    const messages = await snapshot.getPromise(messagesByConversationAtom(conversationId));
     if (!messages) return;
 
     const messageIndex = messages.findIndex(m => m.id === messageId);
@@ -106,21 +106,21 @@ export function useMessages(conversationId?: string) {
     if (!lastUserMessage) return;
 
     try {
-      const aiMessage = createMessage(chatId, '', 'assistant', model, activeSession.id, activeSession.model_name);
-      set(messagesByChatAtom(chatId), (prev) => {
+      const aiMessage = createMessage(conversationId, '', 'assistant', model, id, model_name);
+      set(messagesByConversationAtom(conversationId), (prev) => {
         if (!prev) return [aiMessage];
         const filtered = prev.filter(m => m.id !== messageId);
         return [...filtered, aiMessage];
       });
       
-      await streamResponse(chatId, aiMessage.id, lastUserMessage.content, activeSession.id);
+      await streamResponse(conversationId, aiMessage.id, lastUserMessage.content, id);
     } finally {
-      set(isRespondingState(chatId), false);
+      set(isRespondingState(conversationId), false);
     }
   });
 
   const createMessage = (
-    chatId: string, 
+    conversationId: string, 
     content: string, 
     role: 'user' | 'assistant', 
     model: string,
@@ -137,13 +137,13 @@ export function useMessages(conversationId?: string) {
     ...(role === 'assistant' && { status: 'loading' }),
   });
 
-  const streamResponse = useRecoilCallback(({ set }) => async (chatId: string, messageId: string, userMessage: string, chatSessionId: string) => {
+  const streamResponse = useRecoilCallback(({ set }) => async (conversationId: string, messageId: string, userMessage: string, chatSessionId: string) => {
     const orgId = OrgState.getCurrentOrg();
     if (!orgId) {
       throw new Error('No organization ID available');
     }
 
-    set(messagesByChatAtom(chatId), (prev) =>
+    set(messagesByConversationAtom(conversationId), (prev) =>
       prev?.map(msg => msg.id === messageId ? { ...msg, status: undefined, streaming: true } : msg) || []
     );
 
@@ -151,7 +151,7 @@ export function useMessages(conversationId?: string) {
 
     try {
       await makeStreamRequest(
-        `/api/conversation/stream_chat?org_id=${orgId}`,
+        `/conversation/stream_chat?org_id=${orgId}`,
         {
           method: 'POST',
           body: {
@@ -161,18 +161,18 @@ export function useMessages(conversationId?: string) {
         },
         (chunk) => {
           currentContent += chunk;
-          set(messagesByChatAtom(chatId), (prev) =>
+          set(messagesByConversationAtom(conversationId), (prev) =>
             prev?.map(msg => msg.id === messageId ? { ...msg, content: currentContent } : msg) || []
           );
         }
       );
     } catch (error) {
       console.error('Stream error:', error);
-      set(messagesByChatAtom(chatId), (prev) =>
+      set(messagesByConversationAtom(conversationId), (prev) =>
         prev?.map(msg => msg.id === messageId ? { ...msg, status: 'error' } : msg) || []
       );
     } finally {
-      set(messagesByChatAtom(chatId), (prev) =>
+      set(messagesByConversationAtom(conversationId), (prev) =>
         prev?.map(msg => msg.id === messageId ? { ...msg, streaming: false } : msg) || []
       );
     }

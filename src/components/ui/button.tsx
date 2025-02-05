@@ -1,11 +1,11 @@
 import React, { forwardRef } from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'secondary' | 'ghost' | 'destructive';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
   isLoading?: boolean;
@@ -52,6 +52,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     sm: 'h-8 px-3 text-xs',
     md: 'h-9 px-4 text-sm',
     lg: 'h-10 px-5 text-base',
+    icon: 'h-6 w-6 p-0',
   };
 
   const buttonStyles = cn(

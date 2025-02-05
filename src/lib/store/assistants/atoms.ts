@@ -25,8 +25,3 @@ export const llmModelsLoadingState = atom<boolean>({
   key: 'assistants/llmModelsLoadingState',
   default: false,
 });
-
-export const llmModelsLastFetchState = atom<number | null>({
-  key: 'assistants/llmModelsLastFetchState',
-  default: null,
-});

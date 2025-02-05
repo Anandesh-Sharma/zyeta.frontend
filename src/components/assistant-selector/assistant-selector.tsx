@@ -10,16 +10,17 @@ import { useLLM } from '@/lib/hooks/use-llm';
 import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
 import { useRecoilCallback } from 'recoil';
 import { currentConversationState } from '@/lib/store/conversations/selectors';
+import { useAssistant } from '@/lib/hooks/use-assistances';
 
 interface AssistantSelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  currentAssistantId: string;
 }
 
-export function AssistantSelector({ isOpen, onClose, currentAssistantId }: AssistantSelectorProps) {
+export function AssistantSelector({ isOpen, onClose }: AssistantSelectorProps) {
   const filteredAssistants = useRecoilValue(filteredAssistantsState);
-  const [selectedAssistantId, setSelectedAssistantId] = useState<string>(currentAssistantId);
+  const {currentSelectedAssistant} = useAssistant();
+  const [selectedAssistantId, setSelectedAssistantId] = useState<string>(currentSelectedAssistant?.id ?? '');
   const { isLoading } = useLLM();
   const { createChatSession } = useChatSessions();
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from '@/lib/theme-provider';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';

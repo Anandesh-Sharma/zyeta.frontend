@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, Building2, Loader2, Settings } from 'lucide-react';
+import { Plus, Building2, Settings } from 'lucide-react';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { CreateOrgModal } from './create-org-modal';
 import { cn } from '@/lib/utils';

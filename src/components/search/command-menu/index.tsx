@@ -5,9 +5,7 @@ import { COMMANDS } from './constants';
 import { CommandGroupComponent } from './command-group';
 import { CommandFooter } from './command-footer';
 import { CommandItem } from './types';
-import { useRecoilValue } from 'recoil';
-import { sortedChatsState } from '@/lib/store/chat/selectors';
-import { getAssistant } from '@/lib/constants/chat';
+import { useConversations } from '@/lib/hooks/use-conversations';
 
 interface CommandMenuProps {
   isOpen: boolean;
@@ -20,20 +18,23 @@ export const CommandMenu = memo(({ isOpen, onClose, onStartChat, onSelectChat }:
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const chats = useRecoilValue(sortedChatsState);
 
+  const { getConversations } = useConversations()
   // Filter and group commands based on search query
   const filteredAndGroupedCommands = useCallback(() => {
     const searchQuery = query.toLowerCase();
     
     // Filter chats first
-    const filteredChats = chats
+    const filteredChats = getConversations()
       .filter(chat => 
-        chat.title.toLowerCase().includes(searchQuery) ||
-        chat.model.toLowerCase().includes(searchQuery)
+        chat.title.toLowerCase().includes(searchQuery)
       )
       .map(chat => {
-        const assistant = getAssistant(chat.model);
+        // TODO: Get assistant from chat
+        const assistant = {
+          name: 'Assistant',
+          icon: MessageSquare
+        };
         return {
           id: chat.id,
           type: 'chat' as const,
@@ -78,7 +79,7 @@ export const CommandMenu = memo(({ isOpen, onClose, onStartChat, onSelectChat }:
       agents: { title: 'Agents', items: agents },
       actions: { title: 'Actions', items: actions }
     };
-  }, [query, chats]);
+  }, [query]);
 
   const groups = filteredAndGroupedCommands();
   const allItems = [

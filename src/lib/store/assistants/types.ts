@@ -10,7 +10,7 @@ export interface Assistant {
   rating?: number;
   usageCount?: string;
   tags?: string[];
-  credits?: number;
+  credits?: string;
 }
 
 export interface AssistantFilter {
