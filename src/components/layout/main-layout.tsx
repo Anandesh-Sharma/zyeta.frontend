@@ -11,7 +11,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const { pathname } = useLocation();
   const currentRoute = ICON_NAV.find(item => pathname.startsWith(item.href)) || ICON_NAV[0];
-  const showSidebar = currentRoute.showSidebar ?? true; // Default to showing sidebar
+  const showSidebar = currentRoute.showSidebar
 
   return (
     <div className="min-h-screen bg-background">

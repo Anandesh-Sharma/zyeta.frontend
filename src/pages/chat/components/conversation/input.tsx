@@ -17,7 +17,7 @@ export function ConversationInput() {
   const handleSendMessage = useCallback(() => {
     const currentConversation = getCurrentConversation();
     if (message.trim() && assistant && currentConversation) {
-      sendMessage(currentConversation.id, assistant.name, message);
+      sendMessage(currentConversation.id, message);
       setMessage('');
       textareaRef.current?.focus();
     }

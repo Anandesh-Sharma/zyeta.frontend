@@ -1,15 +1,21 @@
+import type { Conversation, APIConversation } from '@/lib/types';
+
 import { useRecoilCallback } from 'recoil';
-import { conversationAtomFamily, conversationIdsState, currentConversationIdState } from '../../store/conversations/atoms';
-import { allConversationsState, currentConversationState } from '../../store/conversations/selectors';
-import { Conversation, APIConversation } from '@/lib/types';
+import { v4 } from 'uuid';
+import { conversationAtomFamily,
+  conversationIdsState,
+  currentConversationIdState,
+  allConversationsState,
+  currentConversationState
+} from '@/lib/store/conversations';
+import OrgState from '@/lib/store/organization/org-state';
+import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '@/lib/store/chat-sessions';
+import { getTimestamp } from '@/lib/utils';
+import { assistantsState } from '@/lib/store/assistants';
+
 import { useNetwork } from '../use-network';
 import { useChatSessions } from '../use-chat-sessions';
 import { useMessages } from '../use-messages';
-import OrgState from '../../store/organization/org-state';
-import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '../../store/chat-sessions/atoms';
-import { getTimestamp } from '@/lib/utils';
-import { v4 } from 'uuid';
-import { assistantsState } from '@/lib/store/assistants/selectors';
 
 // Cache duration for conversations (5 minutes)
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -21,11 +27,11 @@ export function useConversations() {
 
   const getCurrentConversation = useRecoilCallback(({ snapshot }) => () => {
     return snapshot.getLoadable(currentConversationState).getValue();
-  }, [currentConversationState]);
+  }, []);
 
   const getConversationIds = useRecoilCallback(({ snapshot }) => () => {
     return snapshot.getLoadable(conversationIdsState).getValue();
-  }, [conversationIdsState]);
+  }, []);
 
   const fetchConversations = useRecoilCallback(({ set }) => async (forceRefresh: boolean = false) => {
     const orgId = OrgState.getCurrentOrg();
@@ -61,7 +67,7 @@ export function useConversations() {
       console.error('Failed to fetch conversations:', err);
       return [];
     }
-  });
+  }, []);
 
   const createNewConversation = useRecoilCallback(({ set, snapshot }) => async () => {
     const orgId = OrgState.getCurrentOrg();
@@ -109,11 +115,11 @@ export function useConversations() {
       console.error('Failed to create conversation:', err);
       throw err;
     }
-  });
+  }, []);
 
   const updateConversation = useRecoilCallback(({ set }) => (conversationId: string, updates: Partial<Conversation>) => {
     set(conversationAtomFamily(conversationId), (prevConversation) => ({ ...prevConversation, ...updates }));
-  });
+  }, []);
 
   const deleteConversation = useRecoilCallback(({ set, snapshot }) => async (conversationId: string) => {
     const currentIds = await snapshot.getPromise(conversationIdsState);
@@ -129,7 +135,7 @@ export function useConversations() {
       const nextId = currentIds[currentIndex + 1] || currentIds[currentIndex - 1];
       set(currentConversationIdState, nextId);
     }
-  });
+  }, []);
 
   const setCurrentConversationId = useRecoilCallback(({ set }) => async (id: string) => {
     set(currentConversationIdState, id);
@@ -139,12 +145,12 @@ export function useConversations() {
       fetchSessionsWithConversation(id),
       fetchMessages(id)
     ]);
-  });
+  }, []);
 
   const getConversations = useRecoilCallback(({ snapshot }) => () => {
     const conversations = snapshot.getLoadable(allConversationsState).getValue();
     return conversations;
-  });
+  }, []);
 
   return {
     getConversationIds,

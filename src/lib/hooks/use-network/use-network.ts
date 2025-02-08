@@ -2,6 +2,7 @@ import axios from 'axios';
 import { API_HOST, API_TOKEN } from '@/lib/env';
 import { useCache } from '@/lib/cache/cache';
 import { ApiError, RequestOptions } from '@/lib/types';
+import { useCallback } from 'react';
 
 export function useNetwork() {
   const cache = useCache();
@@ -27,7 +28,7 @@ export function useNetwork() {
     });
   };
 
-  const makeRequest = async <T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> => {
+  const makeRequest = useCallback(async <T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> => {
     const { method = 'GET', body, headers = {}, cacheDuration, forceRefresh } = options;
 
     // Only cache GET requests
@@ -63,9 +64,9 @@ export function useNetwork() {
     } catch (error) {
       return handleError(error);
     }
-  };
+  }, [cache]);
 
-  const makeStreamRequest = async (endpoint: string, options: RequestOptions = {}, onChunk: (chunk: string) => void) => {
+  const makeStreamRequest = useCallback(async (endpoint: string, options: RequestOptions = {}, onChunk: (chunk: string) => void) => {
     const { method = 'GET', body, headers = {} } = options;
 
     let buffer = '';
@@ -120,7 +121,7 @@ export function useNetwork() {
     } catch (error) {
       handleError(error);
     }
-  };
+  }, []);
 
   const clearCache = () => {
     cache.clear();

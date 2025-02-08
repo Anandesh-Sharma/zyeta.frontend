@@ -3,7 +3,10 @@ export * from './conversation';
 export * from './message';
 export * from './llm';
 export * from './assistant';
-
+export * from './knowledge';
+export * from './document';
+export * from './hooks';
+export * from './chat-session';
 // Network types
 export interface ApiError {
   message: string;

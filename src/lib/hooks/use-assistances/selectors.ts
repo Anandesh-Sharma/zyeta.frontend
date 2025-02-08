@@ -1,8 +1,8 @@
-import type { IHookAction, HookSelectorReturnType } from "@/lib/types/hooks";
+import type { IHookAction, HookSelectorReturnType } from "@/lib/types";
 import type { Assistant } from "@/lib/types";
 
 import { RecoilValue, useRecoilValue } from "recoil";
-import { assistantsState } from "@/lib/store/assistants/selectors";
+import { assistantsState } from "@/lib/store/assistants";
 
 type IType = 
   "assistants";

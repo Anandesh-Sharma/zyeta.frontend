@@ -1,8 +1,8 @@
 import type { Organization } from "@/lib/types";
-import type { HookSelectorReturnType, IHookAction } from "@/lib/types/hooks";
+import type { HookSelectorReturnType, IHookAction } from "@/lib/types";
 
 import { RecoilValueReadOnly, useRecoilValue } from "recoil";
-import { currentOrganizationState } from "@/lib/store/organization/selectors";
+import { currentOrganizationState } from "@/lib/store/organization";
 
 type IType = 
   "currentOrganization";

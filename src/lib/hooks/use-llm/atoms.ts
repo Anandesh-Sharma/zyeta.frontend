@@ -1,8 +1,8 @@
 import type { LLMModel } from "@/lib/types";
-import type { IHookAction, HookStateReturnType } from "@/lib/types/hooks";
+import type { IHookAction, HookStateReturnType } from "@/lib/types";
 
 import { RecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { llmModelsState, llmModelsLoadingState } from "@/lib/store/assistants/atoms";
+import { llmModelsState, llmModelsLoadingState } from "@/lib/store/assistants";
 
 type IType = 
   "LLMModels" | 

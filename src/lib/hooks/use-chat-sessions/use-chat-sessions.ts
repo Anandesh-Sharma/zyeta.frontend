@@ -1,11 +1,15 @@
+import type { ChatSession, CreateChatSessionRequest, ConversationWithSessions } from '@/lib/types';
+
 import { useRecoilCallback } from 'recoil';
-import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '../../store/chat-sessions/atoms';
-import { ChatSession, CreateChatSessionRequest, ConversationWithSessions } from '../../types/chat-session';
 import { useNetwork } from '../use-network';
-import OrgState from '../../store/organization/org-state';
-import { currentConversationState } from '../../store/conversations/selectors';
-import { selectedAssistanceBySessionState } from '../../store/chat-sessions/selectors';
-import { assistantsState } from '@/lib/store/assistants/selectors';
+import OrgState from '@/lib/store/organization/org-state';
+import { currentConversationState } from '@/lib/store/conversations';
+import { 
+  selectedAssistanceBySessionState,
+  conversationSessionsByConversationFamily,
+  selectedSessionIdByConversationFamily
+} from '@/lib/store/chat-sessions';
+import { assistantsState } from '@/lib/store/assistants';
 
 export function useChatSessions() {
   const { makeRequest } = useNetwork();
@@ -35,7 +39,7 @@ export function useChatSessions() {
       console.error('Failed to fetch conversation sessions:', err);
       throw err;
     }
-  });
+  }, []);
 
   const getSelectedAssistant = useRecoilCallback(({ snapshot }) => () => {
     const currentConversation = snapshot.getLoadable(currentConversationState).getValue();
@@ -47,7 +51,7 @@ export function useChatSessions() {
       return null;
     }
     return found;
-  });
+  }, []);
 
   const createChatSession = useRecoilCallback(({ set, snapshot }) => async (request: CreateChatSessionRequest) => {
     const orgId = OrgState.getCurrentOrg();
@@ -96,11 +100,11 @@ export function useChatSessions() {
       console.error('Failed to create chat session:', err);
       throw err;
     }
-  });
+  }, []);
 
   const setSelectedSession = useRecoilCallback(({ set }) => (conversationId: string, sessionId: string) => {
     set(selectedSessionIdByConversationFamily(conversationId), sessionId);
-  });
+  }, []);
 
   const getSelectedSession = useRecoilCallback(({ snapshot }) => () => {
     const currentConversation = snapshot.getLoadable(currentConversationState).getValue();
@@ -108,16 +112,16 @@ export function useChatSessions() {
       return null;
     }
     return snapshot.getLoadable(selectedSessionIdByConversationFamily(currentConversation.id)).getValue();
-  });
+  }, []);
 
   const getAllActiveSessions = useRecoilCallback(({ snapshot }) => async (conversationId: string) => {
     const sessions = await snapshot.getPromise(conversationSessionsByConversationFamily(conversationId));
     return sessions.filter(session => session.status === 'active');
-  });
+  }, []);
 
   const getAllSessions = useRecoilCallback(({ snapshot }) => (conversationId: string) => {
     return snapshot.getLoadable(conversationSessionsByConversationFamily(conversationId)).getValue();
-  });
+  }, []);
 
   return {
     createChatSession,

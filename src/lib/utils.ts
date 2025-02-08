@@ -15,3 +15,7 @@ export function cn(...inputs: ClassValue[]) {
 export function getTimestamp(date: string) {
     return DateTime.fromISO(date).toMillis();
 }
+
+export function formatDate(date: string) {
+  return DateTime.fromISO(date).toFormat("LLL d, t");
+}

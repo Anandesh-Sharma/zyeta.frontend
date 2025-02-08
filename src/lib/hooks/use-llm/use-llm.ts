@@ -1,9 +1,10 @@
-import { useNetwork } from '../use-network';
+import type { LLMModel } from '@/lib/types';
 import { useCallback } from 'react';
-import { LLMModel } from '@/lib/types';
+
 import { useRecoilState } from 'recoil';
-import { llmModelsState, llmModelsLoadingState } from '@/lib/store/assistants/atoms';
+import { llmModelsState, llmModelsLoadingState } from '@/lib/store/assistants';
 import OrgState from '@/lib/store/organization/org-state';
+import { useNetwork } from '../use-network';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 

@@ -11,6 +11,7 @@ import { useUI } from './lib/hooks/use-ui';
 import { useOrganizations } from './lib/hooks/use-organizations/use-organizations';
 import { useConversations } from './lib/hooks/use-conversations';
 import { Loader } from './components/ui/loader';
+import { KnowledgePage } from './pages/knowledge';
 
 function App() {
   const toggleSearch = useUI('isSearchOpen', 'set');
@@ -72,6 +73,7 @@ function App() {
               </MainLayout>
             }
           />
+          <Route path="/knowledge" element={<KnowledgePage /> }  />
         </Routes>
       </div>
     </Router>

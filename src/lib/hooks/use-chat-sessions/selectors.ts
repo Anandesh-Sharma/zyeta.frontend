@@ -1,5 +1,5 @@
 import type { HookSelectorReturnType, IHookAction } from "@/lib/types/hooks";
-import type { ChatSession } from "@/lib/types/chat-session";
+import type { Assistant, ChatSession } from "@/lib/types";
 
 import { RecoilValueReadOnly, useRecoilValue } from "recoil";
 import { 
@@ -7,8 +7,7 @@ import {
   selectedAssistanceBySessionState,
   selectedSessionByConversationState,
   sortedSessionsByConversationState
-} from "@/lib/store/chat-sessions/selectors";
-import { Assistant } from "@/lib/types";
+} from "@/lib/store/chat-sessions";
 import { useConversationSelector } from "../use-conversations";
 
 type IType = 

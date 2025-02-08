@@ -1,4 +1,4 @@
-import { CreditCard, Receipt, Clock, ArrowUpDown, CreditCardIcon, Settings, Grid, Package, Store } from 'lucide-react';
+import { CreditCard, Receipt, Clock, ArrowUpDown, CreditCardIcon, Settings, Grid, Package, Store, BookOpen } from 'lucide-react';
 
 export const BILLING_NAV = [
   { name: 'Overview', href: '/billing', icon: CreditCard },
@@ -7,6 +7,7 @@ export const BILLING_NAV = [
   { name: 'Invoices', href: '/billing/invoices', icon: Receipt },
   { name: 'Usage & Limits', href: '/billing/usage', icon: ArrowUpDown },
   { name: 'Billing Settings', href: '/billing/settings', icon: Settings },
+  { name: 'Knowledge', href: '/knowledge', icon: BookOpen },
 ];
 
 export const AGENT_STORE_NAV = [

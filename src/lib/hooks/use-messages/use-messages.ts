@@ -1,11 +1,13 @@
+import type { Message, APIMessage, APIMessageResponse } from '@/lib/types';
+
 import { useRecoilCallback, useRecoilValue } from 'recoil';
-import { messagesByConversationFamily, isLoadingMessagesConversationFamily, isRespondingConversationFamily } from '@/lib/store/messages/atoms';
-import { Message, APIMessage, APIMessageResponse } from '@/lib/types/message';
+import { messagesByConversationFamily, isLoadingMessagesConversationFamily, isRespondingConversationFamily } from '@/lib/store/messages';
+
 import { v4 as uuidv4 } from 'uuid';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNetwork } from '@/lib/hooks/use-network';
 import OrgState from '@/lib/store/organization/org-state';
-import { selectedSessionByConversationState } from '@/lib/store/chat-sessions/selectors';
+import { selectedSessionByConversationState } from '@/lib/store/chat-sessions';
 
 const MESSAGES_LIMIT = 20;
 
@@ -49,33 +51,33 @@ export function useMessages(conversationId?: string) {
       // Clear loading state
       set(isLoadingMessagesConversationFamily(conversationId), false);
     }
-  });
+  }, []);
 
-  const sendMessage = useRecoilCallback(({ set, snapshot }) => async (conversationId: string, model: string, content: string) => {
+  const sendMessage = useRecoilCallback(({ set, snapshot }) => async (conversationId: string, content: string) => {
     const selectedSession = await snapshot.getPromise(selectedSessionByConversationState(conversationId));
     if (!selectedSession) {
       throw new Error('No active chat session found');
     }
 
-    const {id, model_name} = selectedSession;
+    const {id: sessionId, model_name, model_id} = selectedSession;
 
     const currentIsResponding = await snapshot.getPromise(isRespondingConversationFamily(conversationId));
 
     if (currentIsResponding) return;
 
-    const userMessage = createMessage(conversationId, content, 'user', model, id, model_name);
+    const userMessage = createMessage(content, 'user', model_id, sessionId, model_name);
     set(messagesByConversationFamily(conversationId), (prev) => [...(prev || []), userMessage]);
 
-    const aiMessage = createMessage(conversationId, '', 'assistant', model, id, model_name);
+    const aiMessage = createMessage('', 'assistant', model_id, sessionId, model_name);
     set(messagesByConversationFamily(conversationId), (prev) => [...(prev || []), aiMessage]);
     
     try {
       set(isRespondingConversationFamily(conversationId), true);
-      await streamResponse(conversationId, aiMessage.id, content, id);
+      await streamResponse(conversationId, aiMessage.id, content, sessionId);
     } finally {
       set(isRespondingConversationFamily(conversationId), false);
     }
-  });
+  }, []);
 
   const regenerateResponse = useRecoilCallback(({ set, snapshot }) => async (conversationId: string, messageId: string, model: string) => {
     const selectedSession = await snapshot.getPromise(selectedSessionByConversationState(conversationId));
@@ -83,7 +85,7 @@ export function useMessages(conversationId?: string) {
       throw new Error('No active chat session found');
     }
 
-    const {id, model_name} = selectedSession;
+    const {id: sessionId, model_name, model_id} = selectedSession;
 
     const currentIsResponding = snapshot.getLoadable(isRespondingConversationFamily(conversationId)).getValue();
 
@@ -103,21 +105,20 @@ export function useMessages(conversationId?: string) {
     if (!lastUserMessage) return;
 
     try {
-      const aiMessage = createMessage(conversationId, '', 'assistant', model, id, model_name);
+      const aiMessage = createMessage('', 'assistant', model_id, sessionId, model_name);
       set(messagesByConversationFamily(conversationId), (prev) => {
         if (!prev) return [aiMessage];
         const filtered = prev.filter(m => m.id !== messageId);
         return [...filtered, aiMessage];
       });
       
-      await streamResponse(conversationId, aiMessage.id, lastUserMessage.content, id);
+      await streamResponse(conversationId, aiMessage.id, lastUserMessage.content, sessionId);
     } finally {
       set(isRespondingConversationFamily(conversationId), false);
     }
-  });
+  }, []);
 
   const createMessage = (
-    conversationId: string, 
     content: string, 
     role: 'user' | 'assistant', 
     model: string,
@@ -173,9 +174,9 @@ export function useMessages(conversationId?: string) {
         prev?.map(msg => msg.id === messageId ? { ...msg, streaming: false } : msg) || []
       );
     }
-  });
+  }, []);
 
-  const convertAPIMessage = (apiMessage: APIMessage): Message => ({
+  const convertAPIMessage = useCallback((apiMessage: APIMessage): Message => ({
     id: apiMessage.id,
     content: apiMessage.content,
     role: apiMessage.role === 'USER' ? 'user' : 'assistant',
@@ -185,7 +186,7 @@ export function useMessages(conversationId?: string) {
     modelName: apiMessage.model_name,
     agentName: apiMessage.agent_name,
     tokenUsed: apiMessage.token_used
-  });
+  }), []);
 
   return useMemo(() => ({
     sendMessage,

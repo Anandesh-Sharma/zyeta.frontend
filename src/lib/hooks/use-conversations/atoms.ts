@@ -1,8 +1,8 @@
-import type {ConversationIdsState, CurrentConversationIdState } from "@/lib/store/conversations/types";
+import type { HookStateReturnType, IHookAction } from "@/lib/types";
+import type { ConversationIdsState, CurrentConversationIdState } from "@/lib/store/conversations/types";
 
 import { RecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { conversationIdsState, currentConversationIdState } from "@/lib/store/conversations/atoms";
-import { HookStateReturnType, type IHookAction } from "@/lib/types/hooks";
+import { conversationIdsState, currentConversationIdState } from "@/lib/store/conversations";
 
 type IType = 
   "conversationIds" | 

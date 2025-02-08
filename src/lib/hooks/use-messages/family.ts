@@ -1,8 +1,8 @@
 import type { IHookAction, HookStateReturnType } from '@/lib/types/hooks';
-import type { Message } from '@/lib/types/message';
+import type { Message } from '@/lib/types';
 
 import { RecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { messagesByConversationFamily, isLoadingMessagesConversationFamily, isRespondingConversationFamily } from '@/lib/store/messages/atoms';
+import { messagesByConversationFamily, isLoadingMessagesConversationFamily, isRespondingConversationFamily } from '@/lib/store/messages';
 
 type IType = 
   "messagesByConversation" |

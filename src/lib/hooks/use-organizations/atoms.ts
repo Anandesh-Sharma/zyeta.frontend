@@ -1,8 +1,8 @@
 import type { Organization } from "@/lib/types";
-import type { IHookAction, HookStateReturnType } from "@/lib/types/hooks";
+import type { IHookAction, HookStateReturnType } from "@/lib/types";
 
 import { RecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { currentOrgIdState, organizationsState } from "@/lib/store/organization/atoms";
+import { currentOrgIdState, organizationsState } from "@/lib/store/organization";
 
 type IType = 
   "currentOrgId" | 

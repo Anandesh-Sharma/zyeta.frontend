@@ -48,7 +48,9 @@ export const ConversationMessages = memo(() => {
   }, [filteredMessages.length, scrollToBottom]);
 
   const handleRegenerate = useCallback((messageId: string) => {
-    regenerateResponse(currentConversation?.id ?? '', messageId, assistant?.name ?? '');
+    if(assistant) {
+      regenerateResponse(currentConversation?.id ?? '', messageId, assistant.id);
+    }
   }, [currentConversation?.id, assistant?.name, regenerateResponse]);
 
   if (isLoading) {

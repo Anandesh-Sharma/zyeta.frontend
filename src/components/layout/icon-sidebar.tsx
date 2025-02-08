@@ -11,7 +11,7 @@ export const ICON_NAV = [
   { icon: Store, href: '/agent-store', showSidebar: true, name: 'Agent Store' },
   { icon: CreditCard, href: '/billing', showSidebar: true, name: 'Billing' },
   { icon: Inbox, href: '/inbox', showSidebar: true, name: 'Inbox' },
-  { icon: BookOpen, href: '/knowledge', showSidebar: true, name: 'Knowledge Base' },
+  { icon: BookOpen, href: '/knowledge', showSidebar: false, name: 'Knowledge Base' },
   { icon: BarChart2, href: '/reports', showSidebar: true, name: 'Reports' },
   { icon: MessageSquare, href: '/outbound', showSidebar: true, name: 'Outbound' },
   { icon: Users, href: '/contacts', showSidebar: true, name: 'Contacts' },

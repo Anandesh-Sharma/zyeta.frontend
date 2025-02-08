@@ -1,8 +1,8 @@
-import type { IHookAction, HookStateReturnType } from '@/lib/types/hooks';
+import type { IHookAction, HookStateReturnType } from '@/lib/types';
+import type { ChatSession } from '@/lib/types';
 
 import { RecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '@/lib/store/chat-sessions/atoms';
-import { ChatSession } from '@/lib/types/chat-session';
+import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '@/lib/store/chat-sessions';
 
 type IType = 
   "conversationSessionsByConversation" |
