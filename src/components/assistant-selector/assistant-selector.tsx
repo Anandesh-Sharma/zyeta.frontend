@@ -7,10 +7,9 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useLLM } from '@/lib/hooks/use-llm';
-import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
+import { useChatSessions, useSelectedAssistant } from '@/lib/hooks/use-chat-sessions';
 import { useRecoilCallback } from 'recoil';
 import { currentConversationState } from '@/lib/store/conversations/selectors';
-import { useAssistant } from '@/lib/hooks/use-assistances';
 
 interface AssistantSelectorProps {
   isOpen: boolean;
@@ -19,8 +18,8 @@ interface AssistantSelectorProps {
 
 export function AssistantSelector({ isOpen, onClose }: AssistantSelectorProps) {
   const filteredAssistants = useRecoilValue(filteredAssistantsState);
-  const {currentSelectedAssistant} = useAssistant();
-  const [selectedAssistantId, setSelectedAssistantId] = useState<string>(currentSelectedAssistant?.id ?? '');
+  const assistant = useSelectedAssistant();
+  const [selectedAssistantId, setSelectedAssistantId] = useState<string>(assistant?.id ?? '');
   const { isLoading } = useLLM();
   const { createChatSession } = useChatSessions();
 
@@ -42,7 +41,7 @@ export function AssistantSelector({ isOpen, onClose }: AssistantSelectorProps) {
     } catch (error) {
       console.error('Failed to start chat:', error);
     }
-  });
+  }, [selectedAssistantId]);
 
   const footer = (
     <>

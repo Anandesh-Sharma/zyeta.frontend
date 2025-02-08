@@ -25,9 +25,11 @@ export const selectedSessionByConversationState = selectorFamily<ChatSession | n
 export const selectedAssistanceBySessionState = selectorFamily<Assistant | null, string>({
   key: 'chatSessions/selectedAssistanceBySession',
   get: (conversationId: string) => ({ get }) => {
-    const selectedSessionId = get(selectedSessionIdByConversationFamily(conversationId));
+    const selectedSession = get(selectedSessionByConversationState(conversationId));
+
+    console.log('selectedSessionId', selectedSession)
     const assistants = get(assistantsState);
-    const selectedAssistant = assistants.find(assistant => assistant.id === selectedSessionId);
+    const selectedAssistant = assistants.find(assistant => assistant.id === selectedSession?.model_id);
     return selectedAssistant || null;
   },
 });

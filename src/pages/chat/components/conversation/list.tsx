@@ -3,24 +3,24 @@ import { cn } from '@/lib/utils';
 import { useCallback, useMemo, useState } from 'react';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Button } from '@/components/ui/button';
-import { useConversations } from '@/lib/hooks/use-conversations';
+import { useConversations, useConversationSelector } from '@/lib/hooks/use-conversations';
 import { useUI } from '@/lib/hooks/use-ui';
 
 export function ConversationList() {
-  const { ui, toggleSearch: onOpenSearch } = useUI();
-  const isSidebarOpen = ui.isSidebarOpen;
-  const {getConversations} = useConversations();
+  const toggleSearch = useUI('isSearchOpen', 'set');
+  const isSidebarOpen = useUI('isSidebarOpen', 'get');
   const { 
     createNewConversation,
     deleteConversation,
     setCurrentConversationId,
-    currentConversation,
   } = useConversations();
+
+  const currentConversation = useConversationSelector('currentConversation', "get");
+  const conversations = useConversationSelector("allConversations", "get");
+
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   
-  const conversations = useMemo(() => getConversations(), [getConversations]);
-
   const handleDeleteConversation = useCallback((e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
     if (conversations.length > 1) {
@@ -37,6 +37,11 @@ export function ConversationList() {
       setIsCreatingChat(false);
     }
   }, [createNewConversation, isCreatingChat]);
+
+
+  const onClose = useCallback(() => {
+    toggleSearch(false);
+  }, [toggleSearch]);
 
   if (!currentConversation) return null;
 
@@ -97,7 +102,7 @@ export function ConversationList() {
             variant="ghost"
             size="sm"
             icon={Search}
-            onClick={onOpenSearch}
+            onClick={onClose}
             className="w-full justify-start text-muted-foreground hover:text-foreground"
           >
             Search chats...

@@ -1,23 +1,24 @@
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { X, ChevronDown, Zap, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AssistantSelector } from '@/components/assistant-selector/assistant-selector';
 import { Button } from '@/components/ui/button';
 import { useUI } from '@/lib/hooks/use-ui';
-import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
+import {  useSelectedAssistant } from '@/lib/hooks/use-chat-sessions';
 
 export function ConversationDetails() {
-  const { ui, toggleDetailsPanel: onClose } = useUI();
+  const toggleDetailsPanel = useUI('isDetailsPanelOpen', 'set');
+  const isDetailsPanelOpen = useUI('isDetailsPanelOpen', 'get');
 
-  const isOpen = ui.isDetailsPanelOpen;
+  const isOpen = isDetailsPanelOpen;
 
   const [isAssistantSelectOpen, setIsAssistantSelectOpen] = React.useState(false);
   
-  const { getSelectedAssistant } = useChatSessions();
-  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
-
+  const assistant = useSelectedAssistant();
+  
   // const Icon = assistant?.icon;
 
+  console.log('assistant', assistant)
   const modelName = assistant?.name ?? '';
 
   React.useEffect(() => {
@@ -31,6 +32,10 @@ export function ConversationDetails() {
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
   }, []);
+
+  const onClose = useCallback(() => {
+    toggleDetailsPanel(false);
+  }, [toggleDetailsPanel]);
 
   return (
     <>

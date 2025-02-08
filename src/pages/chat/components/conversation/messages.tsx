@@ -1,28 +1,25 @@
 import { memo, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useMessages } from '@/lib/hooks/use-messages';
-import { useRecoilValue } from 'recoil';
-import { isLoadingMessagesState, messagesByConversationAtom } from '@/lib/store/messages/atoms';
-import { useConversations } from '@/lib/hooks/use-conversations';
+import { useMessages, useMessagesAtomFamily } from '@/lib/hooks/use-messages';
+import { useConversationSelector } from '@/lib/hooks/use-conversations';
 import { LoadingPlaceholder } from '@/components/ui/loading-placeholder';
 import { ChatMessage } from '../message';
-import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
+import { useSelectedAssistant, useSelectedSession } from '@/lib/hooks/use-chat-sessions';
 
 export const ConversationMessages = memo(() => {
-  const { currentConversation } = useConversations();
-  const messages = useRecoilValue(messagesByConversationAtom(currentConversation?.id ?? ''));
-  const isLoading = useRecoilValue(isLoadingMessagesState(currentConversation?.id ?? ''));
+  const currentConversation = useConversationSelector('currentConversation', 'get');
+  const messages = useMessagesAtomFamily('messagesByConversation', 'get', currentConversation?.id ?? '');
+  const isLoading = useMessagesAtomFamily('isLoadingMessagesConversation', 'get', currentConversation?.id ?? '');
+
   const { regenerateResponse } = useMessages();
-  const { getSelectedAssistant, getSelectedSession } = useChatSessions();
-  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
+
+  const selectedSession = useSelectedSession();
+  
+  const assistant = useSelectedAssistant();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  // const Icon = assistant?.icon;
 
-  // Get active session for model name
-  const activeSession = useMemo(() => 
-    getSelectedSession(),
-    [getSelectedSession]
-  );
+  console.log('messages', messages)
+  // const Icon = assistant?.icon;
 
   // Filter messages based on selected session
   const filteredMessages = useMemo(() => {
@@ -66,7 +63,7 @@ export const ConversationMessages = memo(() => {
     );
   }
 
-  if (!activeSession) {
+  if (!selectedSession) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground">
         <div className="text-center space-y-2">

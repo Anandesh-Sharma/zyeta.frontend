@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Building2, Settings } from 'lucide-react';
-import { useOrganizations } from '@/lib/hooks/use-organizations';
+import { useOrganizations, useOrganizationAtom, useGetOrganizationSelector } from '@/lib/hooks/use-organizations';
 import { CreateOrgModal } from './create-org-modal';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,11 @@ import { useNavigate } from 'react-router-dom';
 export function OrgSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const { organizations, currentOrganization, switchOrganization } = useOrganizations();
+  
+  const { switchOrganization } = useOrganizations();
+  const organizations = useOrganizationAtom('organizations', 'get');
+  const currentOrganization = useGetOrganizationSelector("currentOrganization", 'get');
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 

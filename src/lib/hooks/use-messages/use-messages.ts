@@ -1,17 +1,17 @@
 import { useRecoilCallback, useRecoilValue } from 'recoil';
-import { messagesByConversationAtom, isRespondingState, isLoadingMessagesState } from '../store/messages/atoms';
+import { messagesByConversationFamily, isLoadingMessagesConversationFamily, isRespondingConversationFamily } from '@/lib/store/messages/atoms';
 import { Message, APIMessage, APIMessageResponse } from '@/lib/types/message';
 import { v4 as uuidv4 } from 'uuid';
 import { useMemo } from 'react';
-import { useNetwork } from './use-network';
-import OrgState from '../store/organization/org-state';
-import { selectedSessionByConversationState } from '../store/chat-sessions/selectors';
+import { useNetwork } from '@/lib/hooks/use-network';
+import OrgState from '@/lib/store/organization/org-state';
+import { selectedSessionByConversationState } from '@/lib/store/chat-sessions/selectors';
 
 const MESSAGES_LIMIT = 20;
 
 export function useMessages(conversationId?: string) {
-  const isResponding = conversationId ? useRecoilValue(isRespondingState(conversationId)) : false;
-  const isLoading = conversationId ? useRecoilValue(isLoadingMessagesState(conversationId)) : false;
+  const isResponding = conversationId ? useRecoilValue(isRespondingConversationFamily(conversationId)) : false;
+  const isLoading = conversationId ? useRecoilValue(isLoadingMessagesConversationFamily(conversationId)) : false;
   
   const { makeStreamRequest, makeRequest } = useNetwork();
 
@@ -23,11 +23,8 @@ export function useMessages(conversationId?: string) {
 
     try {
       // Set loading state
-      set(isLoadingMessagesState(conversationId), true);
+      set(isLoadingMessagesConversationFamily(conversationId), true);
       
-      // Clear existing messages while loading
-      set(messagesByConversationAtom(conversationId), undefined);
-
       const response = await makeRequest<APIMessageResponse>(
         `/conversation/messages?org_id=${orgId}&conversation_id=${conversationId}&limit=${MESSAGES_LIMIT}&offset=${offset}`
       );
@@ -36,7 +33,7 @@ export function useMessages(conversationId?: string) {
       const messages = response.messages.map(convertAPIMessage);
 
       // Set messages in state
-      set(messagesByConversationAtom(conversationId), messages);
+      set(messagesByConversationFamily(conversationId), messages);
 
       return {
         messages,
@@ -46,11 +43,11 @@ export function useMessages(conversationId?: string) {
     } catch (error) {
       console.error('Failed to fetch messages:', error);
       // Set empty array to indicate error state
-      set(messagesByConversationAtom(conversationId), []);
+      set(messagesByConversationFamily(conversationId), []);
       throw error;
     } finally {
       // Clear loading state
-      set(isLoadingMessagesState(conversationId), false);
+      set(isLoadingMessagesConversationFamily(conversationId), false);
     }
   });
 
@@ -62,21 +59,21 @@ export function useMessages(conversationId?: string) {
 
     const {id, model_name} = selectedSession;
 
-    const currentIsResponding = await snapshot.getPromise(isRespondingState(conversationId));
+    const currentIsResponding = await snapshot.getPromise(isRespondingConversationFamily(conversationId));
 
     if (currentIsResponding) return;
 
     const userMessage = createMessage(conversationId, content, 'user', model, id, model_name);
-    set(messagesByConversationAtom(conversationId), (prev) => [...(prev || []), userMessage]);
+    set(messagesByConversationFamily(conversationId), (prev) => [...(prev || []), userMessage]);
 
     const aiMessage = createMessage(conversationId, '', 'assistant', model, id, model_name);
-    set(messagesByConversationAtom(conversationId), (prev) => [...(prev || []), aiMessage]);
+    set(messagesByConversationFamily(conversationId), (prev) => [...(prev || []), aiMessage]);
     
     try {
-      set(isRespondingState(conversationId), true);
+      set(isRespondingConversationFamily(conversationId), true);
       await streamResponse(conversationId, aiMessage.id, content, id);
     } finally {
-      set(isRespondingState(conversationId), false);
+      set(isRespondingConversationFamily(conversationId), false);
     }
   });
 
@@ -88,11 +85,11 @@ export function useMessages(conversationId?: string) {
 
     const {id, model_name} = selectedSession;
 
-    const currentIsResponding = snapshot.getLoadable(isRespondingState(conversationId)).getValue();
+    const currentIsResponding = snapshot.getLoadable(isRespondingConversationFamily(conversationId)).getValue();
 
     if (currentIsResponding) return;
 
-    const messages = await snapshot.getPromise(messagesByConversationAtom(conversationId));
+    const messages = await snapshot.getPromise(messagesByConversationFamily(conversationId));
     if (!messages) return;
 
     const messageIndex = messages.findIndex(m => m.id === messageId);
@@ -107,7 +104,7 @@ export function useMessages(conversationId?: string) {
 
     try {
       const aiMessage = createMessage(conversationId, '', 'assistant', model, id, model_name);
-      set(messagesByConversationAtom(conversationId), (prev) => {
+      set(messagesByConversationFamily(conversationId), (prev) => {
         if (!prev) return [aiMessage];
         const filtered = prev.filter(m => m.id !== messageId);
         return [...filtered, aiMessage];
@@ -115,7 +112,7 @@ export function useMessages(conversationId?: string) {
       
       await streamResponse(conversationId, aiMessage.id, lastUserMessage.content, id);
     } finally {
-      set(isRespondingState(conversationId), false);
+      set(isRespondingConversationFamily(conversationId), false);
     }
   });
 
@@ -143,7 +140,7 @@ export function useMessages(conversationId?: string) {
       throw new Error('No organization ID available');
     }
 
-    set(messagesByConversationAtom(conversationId), (prev) =>
+    set(messagesByConversationFamily(conversationId), (prev) =>
       prev?.map(msg => msg.id === messageId ? { ...msg, status: undefined, streaming: true } : msg) || []
     );
 
@@ -161,18 +158,18 @@ export function useMessages(conversationId?: string) {
         },
         (chunk) => {
           currentContent += chunk;
-          set(messagesByConversationAtom(conversationId), (prev) =>
+          set(messagesByConversationFamily(conversationId), (prev) =>
             prev?.map(msg => msg.id === messageId ? { ...msg, content: currentContent } : msg) || []
           );
         }
       );
     } catch (error) {
       console.error('Stream error:', error);
-      set(messagesByConversationAtom(conversationId), (prev) =>
-        prev?.map(msg => msg.id === messageId ? { ...msg, status: 'error' } : msg) || []
+      set(messagesByConversationFamily(conversationId), (prev) =>
+        prev?.map(msg => msg.id === messageId ? { ...msg } : msg) || []
       );
     } finally {
-      set(messagesByConversationAtom(conversationId), (prev) =>
+      set(messagesByConversationFamily(conversationId), (prev) =>
         prev?.map(msg => msg.id === messageId ? { ...msg, streaming: false } : msg) || []
       );
     }

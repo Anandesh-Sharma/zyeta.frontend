@@ -1,11 +1,11 @@
 import { useRecoilCallback } from 'recoil';
-import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '../store/chat-sessions/atoms';
-import { ChatSession, CreateChatSessionRequest, ConversationWithSessions } from '../types/chat-session';
-import { useNetwork } from './use-network';
-import OrgState from '../store/organization/org-state';
-import { currentConversationState } from '../store/conversations/selectors';
-import { selectedAssistanceBySessionState } from '../store/chat-sessions/selectors';
-import { assistantsState } from '../store/assistants/selectors';
+import { conversationSessionsByConversationFamily, selectedSessionIdByConversationFamily } from '../../store/chat-sessions/atoms';
+import { ChatSession, CreateChatSessionRequest, ConversationWithSessions } from '../../types/chat-session';
+import { useNetwork } from '../use-network';
+import OrgState from '../../store/organization/org-state';
+import { currentConversationState } from '../../store/conversations/selectors';
+import { selectedAssistanceBySessionState } from '../../store/chat-sessions/selectors';
+import { assistantsState } from '@/lib/store/assistants/selectors';
 
 export function useChatSessions() {
   const { makeRequest } = useNetwork();
@@ -39,12 +39,12 @@ export function useChatSessions() {
 
   const getSelectedAssistant = useRecoilCallback(({ snapshot }) => () => {
     const currentConversation = snapshot.getLoadable(currentConversationState).getValue();
-    if(!currentConversation?.id) {
+    if (!currentConversation?.id) {
       return null;
     }
     const found = snapshot.getLoadable(selectedAssistanceBySessionState(currentConversation.id)).getValue();
     if (!found) {
-      return snapshot.getLoadable(assistantsState).getValue()[0];
+      return null;
     }
     return found;
   });
@@ -55,7 +55,9 @@ export function useChatSessions() {
       throw new Error('No organization ID available');
     }
 
-    const selectedAssistant = getSelectedAssistant();
+    const assistants = snapshot.getLoadable(assistantsState).getValue();
+    const selectedAssistant = assistants.find(assistant => assistant.id === request.model_id);  
+
     request.model_id = selectedAssistant?.id;
     try {
       // Get model name from models list

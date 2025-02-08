@@ -1,17 +1,17 @@
 import { atomFamily } from 'recoil';
 import { Message } from '@/lib/types/message';
 
-export const messagesByConversationAtom = atomFamily<Message[] | undefined, string>({
-  key: 'messages/messagesByChatAtom',
+export const messagesByConversationFamily = atomFamily<Message[] | undefined, string>({
+  key: 'messages/messagesByConversationFamily',
   default: undefined,
 });
 
-export const isRespondingState = atomFamily<boolean, string>({
-  key: 'messages/isRespondingState',
+export const isRespondingConversationFamily = atomFamily<boolean, string>({
+  key: 'messages/isRespondingConversationFamily',
   default: false,
 });
 
-export const isLoadingMessagesState = atomFamily<boolean, string>({
-  key: 'messages/isLoadingMessagesState',
+export const isLoadingMessagesConversationFamily = atomFamily<boolean, string>({
+  key: 'messages/isLoadingMessagesConversationFamily',
   default: false,
 });

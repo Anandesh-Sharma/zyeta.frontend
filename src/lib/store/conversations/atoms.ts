@@ -1,5 +1,5 @@
 import { atom, atomFamily } from 'recoil';
-import { ConversationState } from './types';
+import { ConversationState, ConversationIdsState, CurrentConversationIdState } from './types';
 
 // Individual conversation atom family
 export const conversationAtomFamily = atomFamily<ConversationState, string>({
@@ -12,13 +12,13 @@ export const conversationAtomFamily = atomFamily<ConversationState, string>({
 });
 
 // Store conversation IDs in order
-export const conversationIdsState = atom<string[]>({
+export const conversationIdsState = atom<ConversationIdsState>({
   key: 'conversations/conversationIdsState',
   default: [],
 });
 
 // Current conversation ID
-export const currentConversationIdState = atom<string | null>({
+export const currentConversationIdState = atom<CurrentConversationIdState>({
   key: 'conversations/currentConversationIdState',
   default: null,
 });

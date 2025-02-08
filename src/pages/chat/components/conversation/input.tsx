@@ -1,28 +1,27 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { Send } from 'lucide-react';
 import { useMessages } from '@/lib/hooks/use-messages';
 import { useState, useRef } from 'react';
 import { useConversations } from '@/lib/hooks/use-conversations';
-import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
+import { useSelectedAssistant } from '@/lib/hooks/use-chat-sessions';
 
 export function ConversationInput() {
   const [message, setMessage] = useState('');
-  const { currentConversation } = useConversations();
-  const { getSelectedAssistant } = useChatSessions();
+  const {getCurrentConversation} = useConversations();
   const { sendMessage } = useMessages();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Get model name from active session or fallback to assistant name
-  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
+  const assistant = useSelectedAssistant();
   const modelName = assistant?.name; 
 
   const handleSendMessage = useCallback(() => {
-    if (message.trim() && assistant) {
-      sendMessage(currentConversation?.id ?? '', assistant?.name ?? '', message);
+    const currentConversation = getCurrentConversation();
+    if (message.trim() && assistant && currentConversation) {
+      sendMessage(currentConversation.id, assistant.name, message);
       setMessage('');
       textareaRef.current?.focus();
     }
-  }, [message, currentConversation, sendMessage]);
+  }, [message, getCurrentConversation, sendMessage]);
 
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {

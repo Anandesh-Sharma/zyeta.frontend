@@ -6,6 +6,7 @@ import { CommandGroupComponent } from './command-group';
 import { CommandFooter } from './command-footer';
 import { CommandItem } from './types';
 import { useConversations } from '@/lib/hooks/use-conversations';
+import { useSelectedAssistant } from '@/lib/hooks/use-chat-sessions';
 
 interface CommandMenuProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const CommandMenu = memo(({ isOpen, onClose, onStartChat, onSelectChat }:
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const assistant = useSelectedAssistant(); 
 
   const { getConversations } = useConversations()
   // Filter and group commands based on search query
@@ -31,16 +33,12 @@ export const CommandMenu = memo(({ isOpen, onClose, onStartChat, onSelectChat }:
       )
       .map(chat => {
         // TODO: Get assistant from chat
-        const assistant = {
-          name: 'Assistant',
-          icon: MessageSquare
-        };
         return {
           id: chat.id,
           type: 'chat' as const,
           title: chat.title || 'New Chat',
-          description: `Chat with ${assistant.name}`,
-          icon: assistant.icon || MessageSquare,
+          description: `Chat with ${assistant?.name}`,
+          icon: assistant?.icon || MessageSquare,
           chat
         };
       });

@@ -3,28 +3,25 @@ import { ChevronDown, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRecoilState } from 'recoil';
-import { selectedSessionIdByConversationFamily } from '@/lib/store/chat-sessions/atoms';
-import { useConversations } from '@/lib/hooks/use-conversations';
-import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
+import { useConversationSelector } from '@/lib/hooks/use-conversations';
+import { useChatSessions, useChatSessionsAtomFamily, useChatSessionsSelector } from '@/lib/hooks/use-chat-sessions';
 
 export function SessionFilter() {
-  const {currentConversation} = useConversations();
-  const {setSelectedSession, getAllSessions} = useChatSessions();
+  const currentConversation = useConversationSelector('currentConversation', 'get');
+  const {setSelectedSession} = useChatSessions();
 
-  const onSelectSession = useCallback((sessionId: string) => {
-    if (currentConversation?.id) {
-      // setActiveSession(currentConversation.id, sessionId);
-    }
-  }, [currentConversation]);
+  const sessions = useChatSessionsSelector('allSessionsByConversation', 'get', currentConversation?.id ?? '');
+  const selectedSessionId = useChatSessionsAtomFamily('selectedSessionIdByConversation', 'get', currentConversation?.id ?? '');
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [selectedSessionId, setSelectedSessionId] = useRecoilState(
-    selectedSessionIdByConversationFamily(currentConversation?.id ?? '')
-  );
 
-  const sessions = useMemo(() => getAllSessions(currentConversation?.id ?? ''), [currentConversation]);
+  const onSelectSession = useCallback((sessionId: string) => {
+    if (currentConversation?.id) {
+      // @TODO: Implement this
+      setSelectedSession(currentConversation.id, sessionId);
+    }
+  }, [currentConversation]);
 
   // Sort sessions by creation date, newest first
   const sortedSessions = useMemo(() => 
@@ -52,7 +49,7 @@ export function SessionFilter() {
   }, []);
 
   const handleSelectSession = (sessionId: string | 'all') => {
-    setSelectedSessionId(sessionId);
+    setSelectedSession(currentConversation?.id ?? '', sessionId);
     
     // When selecting "All", use the latest session's ID for model info
     if (sessionId === 'all' && latestActiveSession) {

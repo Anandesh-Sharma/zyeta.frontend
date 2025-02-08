@@ -9,6 +9,9 @@ export interface ConversationStore {
   currentConversationId: string | null;
 }
 
+export type ConversationIdsState = string[];
+export type CurrentConversationIdState = string | null;
+
 export type ConversationAction = 
   | { type: 'SET_CURRENT_CONVERSATION'; payload: string }
   | { type: 'CREATE_CONVERSATION'; payload: ConversationState }

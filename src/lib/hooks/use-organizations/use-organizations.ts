@@ -1,17 +1,15 @@
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { organizationsState, currentOrgIdState } from '../store/organization/atoms';
-import { currentOrganizationState } from '../store/organization/selectors';
-import { useNetwork } from './use-network';
+import { useNetwork } from '../use-network';
 import { useCallback } from 'react';
 import { Organization } from '@/lib/types';
-import { useLLM } from './use-llm';
-import { useConversations } from './use-conversations';
-import OrgState from '../store/organization/org-state';
+import { useLLM } from '../use-llm';
+import { useConversations } from '../use-conversations';
+import OrgState from '../../store/organization/org-state';
+import { useOrganizationAtom } from './atoms';
 
 export function useOrganizations() {
-  const [organizations, setOrganizations] = useRecoilState(organizationsState);
-  const setCurrentOrgId = useSetRecoilState(currentOrgIdState);
-  const currentOrganization = useRecoilValue(currentOrganizationState);
+  const setOrganizations = useOrganizationAtom('organizations', 'set');
+  const setCurrentOrgId = useOrganizationAtom("currentOrgId", "set");
+
   const { makeRequest } = useNetwork();
   const { fetchModels } = useLLM();
   const { fetchConversations } = useConversations();
@@ -80,8 +78,6 @@ export function useOrganizations() {
   }, [setOrganizations, setCurrentOrgId, fetchModels, fetchConversations]);
 
   return {
-    organizations,
-    currentOrganization,
     switchOrganization,
     addOrganization,
     fetchOrganizations

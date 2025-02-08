@@ -9,7 +9,7 @@ import { CodeBlock } from '@/components/chat/blocks/code-block';
 import { ImageBlock } from '@/components/chat/blocks/image-block';
 import { VideoBlock } from '@/components/chat/blocks/video-block';
 import { MessageActions } from './actions';
-import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
+import { useSelectedAssistant } from '@/lib/hooks/use-chat-sessions';
 
 interface ChatMessageProps {
   message: Message;
@@ -17,9 +17,7 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage = memo(({ message, onRegenerate }: ChatMessageProps) => {
-  const { getSelectedAssistant } = useChatSessions();
-
-  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
+  const assistant = useSelectedAssistant();
 
   const Icon = message.role === 'user' ? User : Bot;
   const isLoading = message.status === 'loading' && !message.streaming;

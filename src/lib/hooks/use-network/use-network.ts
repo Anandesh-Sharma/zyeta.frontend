@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { API_HOST, API_TOKEN } from '../env';
-import { useCache } from '../cache/cache';
+import { API_HOST, API_TOKEN } from '@/lib/env';
+import { useCache } from '@/lib/cache/cache';
 import { ApiError, RequestOptions } from '@/lib/types';
 
 export function useNetwork() {

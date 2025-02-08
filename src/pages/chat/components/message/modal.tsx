@@ -9,8 +9,7 @@ import { ImageBlock } from '@/components/chat/blocks/image-block';
 import { VideoBlock } from '@/components/chat/blocks/video-block';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
-import { useMemo } from 'react';
-import { useChatSessions } from '@/lib/hooks/use-chat-sessions';
+import { useSelectedAssistant } from '@/lib/hooks/use-chat-sessions';
 
 interface MessageModalProps {
   message: Message;
@@ -33,10 +32,8 @@ export function MessageModal({
   liked,
   onLike
 }: MessageModalProps) {
-  const { getSelectedAssistant } = useChatSessions();
-
-  const assistant = useMemo(() => getSelectedAssistant(), [getSelectedAssistant]);  
-  
+  const assistant = useSelectedAssistant();
+      
   const Icon = message.role === 'user' ? User : Bot;
 
   const footer = (

@@ -8,17 +8,18 @@ import { PublishedAgentsPage } from './pages/agent-store/published';
 import { MainLayout } from './components/layout/main-layout';
 import { useState, useEffect, useRef } from 'react';
 import { useUI } from './lib/hooks/use-ui';
-import { useOrganizations } from './lib/hooks/use-organizations';
+import { useOrganizations } from './lib/hooks/use-organizations/use-organizations';
 import { useConversations } from './lib/hooks/use-conversations';
 import { Loader } from './components/ui/loader';
 
 function App() {
-  const { ui, toggleSearch } = useUI();
+  const toggleSearch = useUI('isSearchOpen', 'set');
   const { fetchOrganizations } = useOrganizations();
   const { fetchConversations } = useConversations();
   const [isLoading, setIsLoading] = useState(true);
   const initializationRef = useRef<Promise<void>>();
 
+  console.log("App");
   // Initialize app only once
   useEffect(() => {
     if (!initializationRef.current) {
@@ -41,7 +42,7 @@ function App() {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        toggleSearch();
+        toggleSearch(prev => !prev);
       }
     };
 
@@ -59,7 +60,7 @@ function App() {
         <IconSidebar />
         <Routes>
           <Route path="/" element={<Navigate to="/chat" replace />} />
-          <Route path="/chat" element={<ChatPage onOpenSearch={toggleSearch} />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/agent-store" element={<MainLayout><AgentStorePage /></MainLayout>} />
           <Route path="/agent-store/my-agents" element={<MainLayout><MyAgentsPage /></MainLayout>} />
           <Route path="/agent-store/published" element={<MainLayout><PublishedAgentsPage /></MainLayout>} />

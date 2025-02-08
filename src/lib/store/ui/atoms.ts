@@ -1,11 +1,19 @@
-import { atom } from 'recoil';
+import { atomFamily } from 'recoil';
 
-export const uiState = atom({
+export type UIStateKey = 'isSidebarOpen' | 'isDetailsPanelOpen' | 'isSearchOpen' | 'isModelSelectOpen';
+
+export const uiState = atomFamily<boolean, UIStateKey>({
   key: 'ui/state',
-  default: {
-    isSidebarOpen: true,
-    isDetailsPanelOpen: true,
-    isSearchOpen: false,
-    isModelSelectOpen: false,
+  default: (param) => {
+    switch (param) {
+      case 'isSidebarOpen':
+      case 'isDetailsPanelOpen':
+        return true;
+      case 'isSearchOpen':
+      case 'isModelSelectOpen':
+        return false;
+      default:
+        return false;
+    }
   },
 });
