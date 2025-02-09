@@ -1,7 +1,5 @@
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
-import { CreateKnowledgeModal } from './components/create-knowledge-modal';
+import { CreateKnowledgeModal } from './components/create-knowledge';
 import { KnowledgeSidebar } from './components/knowledge-sidebar';
 import { DocumentList } from './components/document-list';
 import { useKnowledgeSelector } from '@/lib/hooks/use-knowledge';
